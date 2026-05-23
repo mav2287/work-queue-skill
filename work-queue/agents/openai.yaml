@@ -1,0 +1,4 @@
+interface:
+  display_name: "Work Queue"
+  short_description: "Intake, refine, and drain agent work queues."
+  default_prompt: "Use $work-queue to turn raw bugs, fixes, chores, and feature requests into an executable queue, then drain Ready items through implementation, verification, and cleanup."
