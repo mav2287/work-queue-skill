@@ -16,6 +16,8 @@ Valid status sections, in order:
 
 Status is the section the item lives in. Move the entire item block between sections; do not duplicate it.
 
+The validator warns when sections are missing by default so existing project queues can adopt the skill incrementally. Use `--strict-sections` to require this exact section set and order.
+
 ## Item IDs
 
 Use `WQ-001`, `WQ-002`, and so on by default. Never reuse retired IDs.
@@ -64,6 +66,8 @@ When draining without extra instructions, choose the oldest `Ready` item in the 
 **Notes**
 <repro steps, links, file paths, commands, decisions, dependencies, and verification results>
 ```
+
+Field and acceptance bullets may be indented, but the item heading must be a normal Markdown heading (`### WQ-001 ...`) outside of a fenced code block.
 
 ## Section Semantics
 

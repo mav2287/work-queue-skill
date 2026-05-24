@@ -7,16 +7,21 @@ on:
 jobs:
   validate:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.10", "3.12"]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.x"
+          python-version: ${{ matrix.python-version }}
       - name: Compile scripts
         run: python3 -m py_compile scripts/validate_skill.py work-queue/scripts/validate_queue.py
       - name: Validate skill metadata
         run: python3 scripts/validate_skill.py work-queue
       - name: Validate starter queue
-        run: python3 work-queue/scripts/validate_queue.py work-queue/templates/WORK_QUEUE.md
+        run: python3 work-queue/scripts/validate_queue.py --strict-sections work-queue/templates/WORK_QUEUE.md
       - name: Validate sample queue
-        run: python3 work-queue/scripts/validate_queue.py work-queue/examples/sample-queue.md
+        run: python3 work-queue/scripts/validate_queue.py --strict-sections work-queue/examples/sample-queue.md
+      - name: Run regression tests
+        run: python3 -m unittest discover -s tests

@@ -1,0 +1,124 @@
+import contextlib
+import io
+import importlib.util
+import sys
+import tempfile
+import unittest
+from pathlib import Path
+
+
+ROOT = Path(__file__).resolve().parents[1]
+SCRIPT = ROOT / "work-queue" / "scripts" / "validate_queue.py"
+spec = importlib.util.spec_from_file_location("validate_queue", SCRIPT)
+validate_queue = importlib.util.module_from_spec(spec)
+assert spec.loader is not None
+sys.modules["validate_queue"] = validate_queue
+spec.loader.exec_module(validate_queue)
+
+
+def queue_with_ready(body: str) -> str:
+    return f"""# Work Queue
+
+## In progress
+
+_None._
+
+## Blocked
+
+_None._
+
+## Ready
+
+{body}
+
+## Needs refinement
+
+_None._
+
+## Inbox
+
+_None._
+
+## Done
+
+_None._
+
+## Cancelled
+
+_None._
+"""
+
+
+def item(item_id: str, priority: str = "P1", extra_notes: str = "") -> str:
+    return f"""### {item_id} Fix sample bug
+
+  - **Type**: bug
+  - **Priority**: {priority}
+  - **Created**: 2026-05-23
+  - **Area**: tests
+
+**Problem / Want**
+Sample problem.
+
+**Acceptance**
+**MUST**
+  - [ ] Sample criterion.
+
+**Notes**
+Sample notes.
+{extra_notes}
+"""
+
+
+class ValidateQueueTests(unittest.TestCase):
+    def validate_text(self, text: str, **kwargs) -> int:
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "WORK_QUEUE.md"
+            path.write_text(text, encoding="utf-8")
+            with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(
+                io.StringIO()
+            ):
+                return validate_queue.validate(path, **kwargs)
+
+    def test_fenced_queue_snippet_does_not_create_items_or_sections(self):
+        fenced = """```markdown
+## Ready
+
+### WQ-999 Ignore fenced item
+
+- [ ] Ignore this.
+```
+"""
+        text = queue_with_ready(item("WQ-001", extra_notes=fenced))
+        self.assertEqual(
+            self.validate_text(text, allow_done=False, strict_sections=True), 0
+        )
+
+    def test_emphasized_acceptance_callout_does_not_end_acceptance(self):
+        text = queue_with_ready(item("WQ-001"))
+        self.assertEqual(
+            self.validate_text(text, allow_done=False, strict_sections=True), 0
+        )
+
+    def test_ready_items_must_be_priority_sorted(self):
+        text = queue_with_ready(item("WQ-001", "P2") + "\n" + item("WQ-002", "P1"))
+        self.assertEqual(
+            self.validate_text(text, allow_done=False, strict_sections=True), 1
+        )
+
+    def test_missing_sections_warn_by_default_but_fail_when_strict(self):
+        text = """# Work Queue
+
+## Ready
+
+""" + item("WQ-001")
+        self.assertEqual(
+            self.validate_text(text, allow_done=False, strict_sections=False), 0
+        )
+        self.assertEqual(
+            self.validate_text(text, allow_done=False, strict_sections=True), 1
+        )
+
+
+if __name__ == "__main__":
+    unittest.main()

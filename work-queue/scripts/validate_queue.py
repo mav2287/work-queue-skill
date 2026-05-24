@@ -24,11 +24,26 @@ VALID_TYPES = {"bug", "feature", "chore", "docs", "refactor", "investigation"}
 VALID_PRIORITIES = {"P0", "P1", "P2", "P3"}
 NON_STATUS_SECTIONS = {"Queue Rules"}
 PRIORITY_RANK = {"P0": 0, "P1": 1, "P2": 2, "P3": 3}
+BODY_HEADINGS = {
+    "Problem / Want",
+    "Acceptance",
+    "Notes",
+    "Verification",
+    "Questions",
+    "Blocked on",
+}
 
 SECTION_RE = re.compile(r"^##\s+(.+?)\s*$")
 ITEM_RE = re.compile(r"^###\s+([A-Z][A-Z0-9]*-\d{3,})\s+(.+?)\s*$")
-FIELD_RE = re.compile(r"^-\s+\*\*(Type|Priority|Created|Area)\*\*:\s*(.+?)\s*$")
-CHECKBOX_RE = re.compile(r"^-\s+\[( |x|X)\]\s+(.+?)\s*$")
+FIELD_RE = re.compile(r"^\s*-\s+\*\*(Type|Priority|Created|Area)\*\*:\s*(.+?)\s*$")
+CHECKBOX_RE = re.compile(r"^\s*-\s+\[( |x|X)\]\s+(.+?)\s*$")
+FENCE_RE = re.compile(r"^\s*(```|~~~)")
+BOLD_HEADING_RE = re.compile(r"^\*\*([^*]+)\*\*$")
+BLOCKED_MARKER_RE = re.compile(r"^(?:-\s+)?\*\*(Blocked on|Questions)\*\*:?\s*.*$")
+PLACEHOLDER_RE = re.compile(
+    r"<[^>\n]+>|\b(?:tbd|todo|clarify)\b|\bneeds\s+clarification\b",
+    re.IGNORECASE,
+)
 
 
 @dataclass
@@ -46,14 +61,39 @@ class Section:
     line: int
 
 
-def parse_items(text: str) -> tuple[list[Item], list[Section], list[str]]:
+def is_fence(line: str) -> bool:
+    return bool(FENCE_RE.match(line))
+
+
+def iter_unfenced(lines: list[str]):
+    in_fence = False
+    for line in lines:
+        if is_fence(line):
+            in_fence = not in_fence
+            continue
+        if not in_fence:
+            yield line
+
+
+def parse_items(text: str) -> tuple[list[Item], list[Section]]:
     items: list[Item] = []
     sections: list[Section] = []
-    warnings: list[str] = []
     current_section = ""
     current_item: Item | None = None
+    in_fence = False
 
     for index, line in enumerate(text.splitlines(), start=1):
+        if is_fence(line):
+            if current_item is not None:
+                current_item.body.append(line)
+            in_fence = not in_fence
+            continue
+
+        if in_fence:
+            if current_item is not None:
+                current_item.body.append(line)
+            continue
+
         section_match = SECTION_RE.match(line)
         if section_match:
             current_section = section_match.group(1).strip()
@@ -76,12 +116,12 @@ def parse_items(text: str) -> tuple[list[Item], list[Section], list[str]]:
         if current_item is not None:
             current_item.body.append(line)
 
-    return items, sections, warnings
+    return items, sections
 
 
 def extract_fields(item: Item) -> dict[str, str]:
     fields: dict[str, str] = {}
-    for line in item.body:
+    for line in iter_unfenced(item.body):
         match = FIELD_RE.match(line)
         if match:
             fields[match.group(1)] = match.group(2).strip()
@@ -90,18 +130,19 @@ def extract_fields(item: Item) -> dict[str, str]:
 
 def has_heading(item: Item, heading: str) -> bool:
     marker = f"**{heading}**"
-    return any(line.strip() == marker for line in item.body)
+    return any(line.strip() == marker for line in iter_unfenced(item.body))
 
 
 def acceptance_boxes(item: Item) -> list[tuple[str, str]]:
     boxes: list[tuple[str, str]] = []
     in_acceptance = False
-    for line in item.body:
+    for line in iter_unfenced(item.body):
         stripped = line.strip()
         if stripped == "**Acceptance**":
             in_acceptance = True
             continue
-        if in_acceptance and stripped.startswith("**") and stripped.endswith("**"):
+        heading_match = BOLD_HEADING_RE.match(stripped)
+        if in_acceptance and heading_match and heading_match.group(1) in BODY_HEADINGS:
             break
         if in_acceptance:
             match = CHECKBOX_RE.match(line)
@@ -132,6 +173,10 @@ def id_sort_value(item_id: str) -> tuple[str, int]:
     except ValueError:
         numeric = 0
     return prefix, numeric
+
+
+def has_blocked_marker(item: Item) -> bool:
+    return any(BLOCKED_MARKER_RE.match(line.strip()) for line in iter_unfenced(item.body))
 
 
 def validate_item(item: Item, allow_done: bool) -> tuple[list[str], list[str]]:
@@ -181,18 +226,16 @@ def validate_item(item: Item, allow_done: bool) -> tuple[list[str], list[str]]:
             warnings.append(
                 f"{prefix}: Done items should be retired after a durable record exists"
             )
-        if "Verification" not in "\n".join(item.body):
+        if not has_heading(item, "Verification"):
             warnings.append(f"{prefix}: Done item should record verification in Notes")
 
     if item.section == "Blocked":
-        body = "\n".join(item.body)
-        if "Blocked on" not in body and "Questions" not in body:
+        if not has_blocked_marker(item):
             errors.append(f"{prefix}: Blocked item needs 'Blocked on' or 'Questions'")
 
     if item.section == "Ready":
-        body = "\n".join(item.body).lower()
-        placeholders = ["<", "tbd", "todo", "clarify", "unknown"]
-        if any(token in body for token in placeholders):
+        body = "\n".join(iter_unfenced(item.body))
+        if PLACEHOLDER_RE.search(body):
             warnings.append(
                 f"{prefix}: Ready item may still contain placeholders or uncertainty"
             )
@@ -200,7 +243,9 @@ def validate_item(item: Item, allow_done: bool) -> tuple[list[str], list[str]]:
     return errors, warnings
 
 
-def validate_sections(sections: list[Section]) -> tuple[list[str], list[str]]:
+def validate_sections(
+    sections: list[Section], strict_sections: bool
+) -> tuple[list[str], list[str]]:
     errors: list[str] = []
     warnings: list[str] = []
     status_sections = [section for section in sections if section.name in VALID_SECTIONS]
@@ -220,15 +265,22 @@ def validate_sections(sections: list[Section]) -> tuple[list[str], list[str]]:
 
     for section_name in VALID_SECTIONS:
         if section_name not in seen:
-            errors.append(f"missing required section '## {section_name}'")
+            message = f"missing required section '## {section_name}'"
+            if strict_sections:
+                errors.append(message)
+            else:
+                warnings.append(message)
 
     actual_order = [section.name for section in status_sections]
     expected_order = [name for name in VALID_SECTIONS if name in actual_order]
     if actual_order != expected_order:
-        errors.append(
-            "status sections should be ordered: "
-            + " -> ".join(f"## {name}" for name in VALID_SECTIONS)
+        message = "status sections should be ordered: " + " -> ".join(
+            f"## {name}" for name in VALID_SECTIONS
         )
+        if strict_sections:
+            errors.append(message)
+        else:
+            warnings.append(message)
 
     return errors, warnings
 
@@ -248,7 +300,8 @@ def validate_ready_order(items: list[Item]) -> tuple[list[str], list[str]]:
             continue
 
         key = (PRIORITY_RANK[priority], created, id_sort_value(item.id))
-        if previous_key is not None and key < previous_key and previous_item is not None:
+        if previous_key is not None and key < previous_key:
+            assert previous_item is not None
             errors.append(
                 f"{item.id} line {item.line}: Ready items must be sorted by priority, created date, then ID; appears after {previous_item.id}"
             )
@@ -258,11 +311,12 @@ def validate_ready_order(items: list[Item]) -> tuple[list[str], list[str]]:
     return errors, warnings
 
 
-def validate(path: Path, allow_done: bool) -> int:
+def validate(path: Path, allow_done: bool, strict_sections: bool) -> int:
     text = path.read_text(encoding="utf-8")
-    items, sections, warnings = parse_items(text)
+    items, sections = parse_items(text)
+    warnings: list[str] = []
     errors: list[str] = []
-    section_errors, section_warnings = validate_sections(sections)
+    section_errors, section_warnings = validate_sections(sections, strict_sections)
     errors.extend(section_errors)
     warnings.extend(section_warnings)
 
@@ -306,13 +360,18 @@ def main() -> int:
         action="store_true",
         help="Do not warn merely because Done items are present.",
     )
+    parser.add_argument(
+        "--strict-sections",
+        action="store_true",
+        help="Require the canonical section set and ordering.",
+    )
     args = parser.parse_args()
 
     if not args.queue_file.exists():
         print(f"ERROR: file not found: {args.queue_file}", file=sys.stderr)
         return 2
 
-    return validate(args.queue_file, args.allow_done)
+    return validate(args.queue_file, args.allow_done, args.strict_sections)
 
 
 if __name__ == "__main__":

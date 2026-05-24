@@ -17,21 +17,21 @@ Install for Claude Code as a user skill:
 
 ```bash
 mkdir -p ~/.claude/skills/work-queue
-cp -R work-queue/* ~/.claude/skills/work-queue/
+rsync -a --exclude='.DS_Store' work-queue/ ~/.claude/skills/work-queue/
 ```
 
 Install for Claude Code as a project skill:
 
 ```bash
 mkdir -p .claude/skills/work-queue
-cp -R work-queue/* .claude/skills/work-queue/
+rsync -a --exclude='.DS_Store' work-queue/ .claude/skills/work-queue/
 ```
 
 Install for Codex as a user skill:
 
 ```bash
 mkdir -p "${CODEX_HOME:-$HOME/.codex}/skills/work-queue"
-cp -R work-queue/* "${CODEX_HOME:-$HOME/.codex}/skills/work-queue/"
+rsync -a --exclude='.DS_Store' work-queue/ "${CODEX_HOME:-$HOME/.codex}/skills/work-queue/"
 ```
 
 Claude Code can invoke it with:

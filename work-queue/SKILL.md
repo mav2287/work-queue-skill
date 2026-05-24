@@ -60,7 +60,7 @@ Ready items must include:
 When the user asks to run the queue, continue without stopping after each item:
 
 1. Validate or inspect the queue.
-2. Check current worktree state when the project uses git.
+2. Check current worktree state when the project uses git and preserve unrelated user changes.
 3. Select the next Ready item by priority, then age, unless the user provides another rule.
 4. Move exactly one item to `In progress`.
 5. Implement the smallest complete change that satisfies acceptance.
@@ -77,8 +77,10 @@ Do not silently change scope. If the implementation reveals a separate problem, 
 Run the validator when creating or changing a queue:
 
 ```bash
-python3 ${CLAUDE_SKILL_DIR}/scripts/validate_queue.py WORK_QUEUE.md
+python3 /absolute/path/to/installed/work-queue/scripts/validate_queue.py WORK_QUEUE.md
 ```
+
+Resolve the script path relative to this `SKILL.md` file; the bundled validator lives at `scripts/validate_queue.py`.
 
 Use `--allow-done` when the project intentionally keeps Done items temporarily.
 

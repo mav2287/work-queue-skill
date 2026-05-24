@@ -1,5 +1,7 @@
 ### WQ-XXX <short imperative title>
 
+Replace `WQ-XXX` before saving this into a real queue.
+
 - **Type**: bug | feature | chore | docs | refactor | investigation
 - **Priority**: P0 | P1 | P2 | P3
 - **Created**: YYYY-MM-DD
