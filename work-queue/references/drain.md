@@ -9,8 +9,9 @@ Before changing code:
 1. Read the queue rules and the selected item.
 2. Run the validator if a queue file exists and the script is available.
 3. Confirm there is a `Ready` item.
-4. Move one selected item to `In progress`.
-5. Note the selection rule if it was not obvious.
+4. If the project uses git, check worktree status and identify unrelated user changes before editing.
+5. Move one selected item to `In progress`.
+6. Note the selection rule if it was not obvious.
 
 Default selection: highest priority first, then oldest created date, then lowest ID.
 
@@ -25,7 +26,8 @@ Repeat:
 5. Update Notes with verification commands and results.
 6. Check every acceptance box that is genuinely satisfied.
 7. Move the item to `Done`, or move it to `Blocked` with exact questions or dependencies.
-8. Pick the next `Ready` item and continue.
+8. Checkpoint the completed item.
+9. Pick the next `Ready` item and continue.
 
 Do not stop after one successful item unless the user gave an item limit, time limit, budget limit, or explicitly asked to pause.
 
@@ -62,6 +64,20 @@ Record verification in Notes using concise command/result lines:
 ```
 
 If verification could not run, record the reason and whether the item remains Done or must be Blocked.
+
+## Checkpoints
+
+Keep each item independently reviewable.
+
+When the project uses git:
+
+- Run status before starting each item and after finishing it.
+- Do not overwrite unrelated user changes.
+- Prefer one commit per completed queue item when the user has asked for an autonomous drain and commits are allowed.
+- If commits are not allowed or not wanted, record the item boundary in Notes and keep changes grouped so the next item does not depend on unverified leftovers.
+- Stop before the next item if the worktree has unresolved conflicts, failing verification from the completed item, or changes you cannot confidently attribute.
+
+When committing, omit transient queue IDs from durable commit messages unless the project explicitly treats those IDs as durable.
 
 ## Retiring Items
 

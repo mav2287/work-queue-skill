@@ -13,6 +13,10 @@ jobs:
         with:
           python-version: "3.x"
       - name: Compile scripts
-        run: python3 -m py_compile work-queue/scripts/validate_queue.py
+        run: python3 -m py_compile scripts/validate_skill.py work-queue/scripts/validate_queue.py
+      - name: Validate skill metadata
+        run: python3 scripts/validate_skill.py work-queue
       - name: Validate starter queue
         run: python3 work-queue/scripts/validate_queue.py work-queue/templates/WORK_QUEUE.md
+      - name: Validate sample queue
+        run: python3 work-queue/scripts/validate_queue.py work-queue/examples/sample-queue.md

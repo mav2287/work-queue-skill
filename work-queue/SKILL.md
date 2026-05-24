@@ -60,13 +60,15 @@ Ready items must include:
 When the user asks to run the queue, continue without stopping after each item:
 
 1. Validate or inspect the queue.
-2. Select the next Ready item by priority, then age, unless the user provides another rule.
-3. Move exactly one item to `In progress`.
-4. Implement the smallest complete change that satisfies acceptance.
-5. Run appropriate verification.
-6. Record verification in Notes.
-7. Move the item to `Done`, or to `Blocked` with exact missing information.
-8. Repeat until no Ready items remain, a command/approval/tool is blocked, or the user-specified limit is reached.
+2. Check current worktree state when the project uses git.
+3. Select the next Ready item by priority, then age, unless the user provides another rule.
+4. Move exactly one item to `In progress`.
+5. Implement the smallest complete change that satisfies acceptance.
+6. Run appropriate verification.
+7. Record verification in Notes.
+8. Move the item to `Done`, or to `Blocked` with exact missing information.
+9. Commit, checkpoint, or otherwise isolate the completed item when the project workflow supports it.
+10. Repeat until no Ready items remain, a command/approval/tool is blocked, or the user-specified limit is reached.
 
 Do not silently change scope. If the implementation reveals a separate problem, add a new queue item instead of expanding the current one.
 

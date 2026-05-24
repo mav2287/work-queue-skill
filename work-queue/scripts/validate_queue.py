@@ -22,6 +22,8 @@ VALID_SECTIONS = [
 ]
 VALID_TYPES = {"bug", "feature", "chore", "docs", "refactor", "investigation"}
 VALID_PRIORITIES = {"P0", "P1", "P2", "P3"}
+NON_STATUS_SECTIONS = {"Queue Rules"}
+PRIORITY_RANK = {"P0": 0, "P1": 1, "P2": 2, "P3": 3}
 
 SECTION_RE = re.compile(r"^##\s+(.+?)\s*$")
 ITEM_RE = re.compile(r"^###\s+([A-Z][A-Z0-9]*-\d{3,})\s+(.+?)\s*$")
@@ -38,8 +40,15 @@ class Item:
     body: list[str]
 
 
-def parse_items(text: str) -> tuple[list[Item], list[str]]:
+@dataclass
+class Section:
+    name: str
+    line: int
+
+
+def parse_items(text: str) -> tuple[list[Item], list[Section], list[str]]:
     items: list[Item] = []
+    sections: list[Section] = []
     warnings: list[str] = []
     current_section = ""
     current_item: Item | None = None
@@ -48,10 +57,7 @@ def parse_items(text: str) -> tuple[list[Item], list[str]]:
         section_match = SECTION_RE.match(line)
         if section_match:
             current_section = section_match.group(1).strip()
-            if current_section not in VALID_SECTIONS and current_section != "Queue Rules":
-                warnings.append(
-                    f"line {index}: unknown section '{current_section}'"
-                )
+            sections.append(Section(current_section, index))
             current_item = None
             continue
 
@@ -70,7 +76,7 @@ def parse_items(text: str) -> tuple[list[Item], list[str]]:
         if current_item is not None:
             current_item.body.append(line)
 
-    return items, warnings
+    return items, sections, warnings
 
 
 def extract_fields(item: Item) -> dict[str, str]:
@@ -110,6 +116,22 @@ def validate_date(value: str) -> bool:
     except ValueError:
         return False
     return True
+
+
+def parse_date(value: str) -> date | None:
+    try:
+        return date.fromisoformat(value)
+    except ValueError:
+        return None
+
+
+def id_sort_value(item_id: str) -> tuple[str, int]:
+    prefix, _, number = item_id.rpartition("-")
+    try:
+        numeric = int(number)
+    except ValueError:
+        numeric = 0
+    return prefix, numeric
 
 
 def validate_item(item: Item, allow_done: bool) -> tuple[list[str], list[str]]:
@@ -178,10 +200,71 @@ def validate_item(item: Item, allow_done: bool) -> tuple[list[str], list[str]]:
     return errors, warnings
 
 
+def validate_sections(sections: list[Section]) -> tuple[list[str], list[str]]:
+    errors: list[str] = []
+    warnings: list[str] = []
+    status_sections = [section for section in sections if section.name in VALID_SECTIONS]
+    seen: dict[str, int] = {}
+
+    for section in sections:
+        if section.name in VALID_SECTIONS or section.name in NON_STATUS_SECTIONS:
+            continue
+        errors.append(f"line {section.line}: unknown section '{section.name}'")
+
+    for section in status_sections:
+        if section.name in seen:
+            errors.append(
+                f"line {section.line}: duplicate section '{section.name}' first seen on line {seen[section.name]}"
+            )
+        seen[section.name] = section.line
+
+    for section_name in VALID_SECTIONS:
+        if section_name not in seen:
+            errors.append(f"missing required section '## {section_name}'")
+
+    actual_order = [section.name for section in status_sections]
+    expected_order = [name for name in VALID_SECTIONS if name in actual_order]
+    if actual_order != expected_order:
+        errors.append(
+            "status sections should be ordered: "
+            + " -> ".join(f"## {name}" for name in VALID_SECTIONS)
+        )
+
+    return errors, warnings
+
+
+def validate_ready_order(items: list[Item]) -> tuple[list[str], list[str]]:
+    errors: list[str] = []
+    warnings: list[str] = []
+    ready_items = [item for item in items if item.section == "Ready"]
+    previous_key: tuple[int, date, tuple[str, int]] | None = None
+    previous_item: Item | None = None
+
+    for item in ready_items:
+        fields = extract_fields(item)
+        priority = fields.get("Priority")
+        created = parse_date(fields.get("Created", ""))
+        if priority not in PRIORITY_RANK or created is None:
+            continue
+
+        key = (PRIORITY_RANK[priority], created, id_sort_value(item.id))
+        if previous_key is not None and key < previous_key and previous_item is not None:
+            errors.append(
+                f"{item.id} line {item.line}: Ready items must be sorted by priority, created date, then ID; appears after {previous_item.id}"
+            )
+        previous_key = key
+        previous_item = item
+
+    return errors, warnings
+
+
 def validate(path: Path, allow_done: bool) -> int:
     text = path.read_text(encoding="utf-8")
-    items, warnings = parse_items(text)
+    items, sections, warnings = parse_items(text)
     errors: list[str] = []
+    section_errors, section_warnings = validate_sections(sections)
+    errors.extend(section_errors)
+    warnings.extend(section_warnings)
 
     seen: dict[str, int] = {}
     for item in items:
@@ -194,6 +277,10 @@ def validate(path: Path, allow_done: bool) -> int:
         item_errors, item_warnings = validate_item(item, allow_done)
         errors.extend(item_errors)
         warnings.extend(item_warnings)
+
+    order_errors, order_warnings = validate_ready_order(items)
+    errors.extend(order_errors)
+    warnings.extend(order_warnings)
 
     if not items:
         warnings.append("no queue items found")
