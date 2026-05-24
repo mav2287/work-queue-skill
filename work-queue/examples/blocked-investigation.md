@@ -1,21 +1,24 @@
-### WQ-021 Determine whether invoices must support partial refunds
+### WQ-021 Decide whether imported records need manager approval
 
 - **Type**: investigation
 - **Priority**: P2
 - **Created**: 2026-05-23
-- **Area**: billing
-- **Blocked on**: product decision about refund policy
+- **Area**: import-workflow
+- **Blocked on**: product decision about approval policy
 
 **Problem / Want**
-Support received requests for partial refunds, but the current billing policy only mentions full refunds. Implementation cannot be scoped until the product and finance decision is clear.
+Imported records can be created automatically, but the desired approval policy is unclear. Implementation cannot be scoped until the owner decides whether manager approval is required.
 
 **Acceptance**
-- [ ] Confirm whether partial refunds are supported.
-- [ ] Record the decision in the billing policy docs.
-- [ ] If supported, open Ready implementation items for UI, payment provider integration, tests, and audit logging.
+- [ ] Confirm whether imported records require manager approval.
+- [ ] Record the policy decision in the relevant project docs.
+- [ ] If approval is required, open Ready implementation items for UI, permissions, tests, and audit logging.
 
 **Notes**
+Local checks before asking:
+- Example only: replace with actual target-project searches, files, docs, or logs inspected before asking the user.
+
 **Questions**
-- Are partial refunds allowed for all products or only subscription purchases?
-- Who can issue a partial refund?
-- Does the customer receive a revised invoice?
+- Which imported records require approval, if any?
+- Which role can approve them?
+- What should happen when approval is denied?

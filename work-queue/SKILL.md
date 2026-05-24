@@ -1,6 +1,6 @@
 ---
 name: work-queue
-description: Intake, refine, prioritize, and autonomously drain a Markdown work queue for bugs, fixes, chores, docs, investigations, and feature work. Use when the user wants to capture many work items, turn vague reports into agent-ready tasks, pick the next item, run a queue without repeated prompting, move work through Ready/In progress/Blocked/Done, validate queue structure, or clean up completed items.
+description: Intake, refine, prioritize, and autonomously drain a Markdown work queue for bugs, fixes, chores, docs, investigations, and feature work. Use when the user wants to capture many work items, turn vague reports into agent-ready tasks, verify codebase facts before asking clarifying questions, pick the next item, run a queue without repeated prompting, move work through Ready/In progress/Blocked/Done, validate queue structure, or clean up completed items.
 ---
 
 # Work Queue
@@ -31,6 +31,13 @@ Read the matching reference only when needed:
 ## Intake Rules
 
 Verify what can be verified locally before asking the user. Use code search, tests, logs, issue context, screenshots, and existing docs where available.
+
+Before asking any clarifying question, pass the question gate:
+
+1. List the exact local checks that could answer the question.
+2. Run the cheap checks first: search named routes/components/errors/config, inspect nearby docs/tests, and read existing queue items.
+3. Ask only for facts that still cannot be recovered locally.
+4. When asking, include a short `Checked:` line so the user is not sent back to inspect the same codebase.
 
 Do not turn vague reports into Ready items. If scope, repro, affected user, expected behavior, observed behavior, or acceptance criteria are missing, place the item in `Needs refinement` or `Blocked`.
 

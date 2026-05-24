@@ -23,6 +23,30 @@ Use available project context first:
 
 Do not ask the user a question that local inspection can answer quickly.
 
+## Question Gate
+
+Do not ask the user to do codebase research for the agent. Before asking a question, first answer:
+
+- What exact code/docs/tests/logs could answer this?
+- Did I search the named route, component, command, model, config key, error string, or visible label?
+- Did I inspect the most relevant nearby files?
+- Did I check existing queue items or project docs for the same decision?
+- Is the remaining question about user intent, business priority, inaccessible production data, credentials, or external policy?
+
+Only ask after those checks are exhausted or unavailable.
+
+When a question is still needed, use this shape:
+
+```markdown
+Checked: <files/searches/docs/logs inspected>
+Question: <the missing fact only the user or an external system can provide>
+Why it matters: <what scope, acceptance, or priority decision depends on it>
+```
+
+Do not invent the `Checked` line. It must describe inspection actually performed in the target project. If no inspection was possible, write `Checked: not performed (<reason>)` and keep the item out of `Ready`.
+
+If there is no time or environment to inspect the codebase, say that explicitly and put the item in `Needs refinement` or `Blocked`; do not present the question as if inspection had already happened.
+
 ## Clarifying Questions
 
 Ask questions only when the answer changes scope, priority, acceptance, or feasibility.

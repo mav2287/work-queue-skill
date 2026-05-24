@@ -64,7 +64,7 @@ When draining without extra instructions, choose the oldest `Ready` item in the 
 - [ ] <failure path, edge case, or verification requirement>
 
 **Notes**
-<repro steps, links, file paths, commands, decisions, dependencies, and verification results>
+<repro steps, local checks performed before asking, links, file paths, commands, decisions, dependencies, and verification results>
 ```
 
 Field and acceptance bullets may be indented, but the item heading must be a normal Markdown heading (`### WQ-001 ...`) outside of a fenced code block.

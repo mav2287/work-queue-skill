@@ -15,4 +15,7 @@ Replace `WQ-XXX` before saving this into a real queue.
 - [ ] <failure path, edge case, or verification requirement>
 
 **Notes**
+**Local checks before asking**
+- <actual files, searches, docs, logs, or queue items inspected in the target project; do not invent>
+
 <repro steps, links, file paths, commands, decisions, dependencies, and verification results>

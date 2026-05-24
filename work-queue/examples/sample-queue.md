@@ -12,22 +12,22 @@ _None._
 
 ## Ready
 
-### WQ-001 Show empty state when learner has no assignments
+### WQ-001 Show empty state when a list has no records
 
 - **Type**: bug
 - **Priority**: P1
 - **Created**: 2026-05-23
-- **Area**: learner-dashboard
+- **Area**: records-list
 
 **Problem / Want**
-Learners with zero assignments see a loading spinner forever. They should see the normal empty state.
+Users with zero records see a persistent loading state. They should see the normal empty state.
 
 **Acceptance**
-- [ ] Learners with zero assignments see an empty state.
-- [ ] Learners with active assignments still see the assignment list.
+- [ ] Users with zero records see an empty state.
+- [ ] Users with records still see the populated list.
 
 **Notes**
-- Repro: log in as a learner with zero assignments and open the learner dashboard.
+- Repro: sign in as a user with zero records and open the records list.
 
 ## Needs refinement
 

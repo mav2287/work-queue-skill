@@ -1,18 +1,21 @@
-### WQ-014 Show empty state when learner has no assignments
+### WQ-014 Show empty state when a list has no records
 
 - **Type**: bug
 - **Priority**: P1
 - **Created**: 2026-05-23
-- **Area**: learner-dashboard
+- **Area**: records-list
 
 **Problem / Want**
-Learners with zero assignments hit `/dashboard/learner` and see a loading spinner forever. They should see the normal empty state and a link to browse available training.
+Users with zero records see a persistent loading state. They should see the normal empty state and a clear next action.
 
 **Acceptance**
-- [ ] Learners with zero assignments see an empty state instead of a persistent spinner.
-- [ ] Learners with active assignments still see the assignment list.
-- [ ] The failure path is covered by a test or documented manual verification using a zero-assignment learner.
+- [ ] Users with zero records see an empty state instead of a persistent loader.
+- [ ] Users with records still see the populated list.
+- [ ] The failure path is covered by a test or documented manual verification using a zero-record account.
 
 **Notes**
-- Repro: log in as `learner-empty@example.com`, open `/dashboard/learner`.
-- Relevant files: `app/dashboard/learner/page.tsx`, `app/_components/learner/AssignmentList.tsx`.
+Local checks before asking:
+- Example only: replace with actual target-project files, searches, docs, logs, or queue items inspected before asking the user.
+
+Repro:
+- Sign in as a user with zero records and open the records list.
