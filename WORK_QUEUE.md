@@ -20,22 +20,6 @@ _None._
 
 ## Ready
 
-### WQ-036 Lift "omit transient queue IDs from durable commit messages" into SKILL.md
-
-- **Type**: docs
-- **Priority**: P3
-- **Created**: 2026-05-26
-- **Area**: skill-content
-
-**Problem / Want**
-This is one of the strongest opinions in the skill and is buried at the bottom of `references/drain.md`. Agents that load only SKILL.md never see it.
-
-**Acceptance**
-- [ ] SKILL.md Drain Loop or Retention section states the rule in one line and points at `references/drain.md` for the detail.
-
-**Notes**
-Source: `work-queue/references/drain.md:80-81`, `:86`.
-
 ### WQ-037 Add `mypy --strict` on the validator scripts
 
 - **Type**: chore
@@ -162,6 +146,29 @@ _None._
 _None._
 
 ## Done
+
+### WQ-036 Surface the transient-IDs rule in SKILL.md
+
+- **Type**: docs
+- **Priority**: P3
+- **Created**: 2026-05-26
+- **Area**: skill-content
+
+**Problem / Want**
+The "queue IDs are transient — do not put them in commits/PRs/durable artifacts" rule was buried in `references/drain.md`.
+
+**Acceptance**
+- [x] SKILL.md Drain Loop or Retention section states the rule in one line and points at `references/drain.md` for the detail.
+
+**Notes**
+Added a one-paragraph line to the SKILL.md Retention section restating the rule and pointing at `references/drain.md` for the full rationale. This is also consistent with the commit-message convention used throughout this drain (commit subjects describe the change, not the queue id).
+
+**Verification**
+- `python3 scripts/validate_skill.py work-queue`: passed
+- `python3 work-queue/scripts/validate_queue.py --strict-sections WORK_QUEUE.md`: passed
+
+**Outcome**
+Changed: `work-queue/SKILL.md` (Retention section).
 
 ### WQ-035 Queue Rules in the starter and bundled example
 

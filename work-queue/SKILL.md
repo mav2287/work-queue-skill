@@ -117,3 +117,5 @@ opinionated warnings (multiple In progress, Done without
 ## Retention
 
 The queue tracks active work only. Delete Done and Cancelled items after the work has a durable record in code, a merged PR, release notes, issue tracker, ADR, or another long-lived artifact.
+
+Treat queue IDs (`WQ-001`, etc.) as transient. Do not reference them in commit messages, PR titles, PR bodies, code comments, or any other durable artifact unless the host project explicitly treats those IDs as durable. The full rationale is in `references/drain.md`.
