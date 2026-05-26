@@ -15,6 +15,18 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
+      - name: Reject OS and IDE metadata
+        run: |
+          set -euo pipefail
+          offenders=$(find . \
+            \( -path ./.git -o -path ./node_modules \) -prune -o \
+            \( -name .DS_Store -o -name Thumbs.db -o -name Desktop.ini \
+               -o -path '*/.idea/*' -o -path '*/.vscode/*' \) -print)
+          if [ -n "$offenders" ]; then
+            echo "::error::OS or IDE metadata present in working tree:"
+            echo "$offenders"
+            exit 1
+          fi
       - name: Compile scripts
         run: python3 -m py_compile scripts/validate_skill.py work-queue/scripts/validate_queue.py
       - name: Validate skill metadata
