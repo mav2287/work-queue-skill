@@ -40,6 +40,7 @@ CHECKBOX_RE = re.compile(r"^\s*-\s+\[( |x|X)\]\s+(.+?)\s*$")
 FENCE_RE = re.compile(r"^\s*(```|~~~)")
 BOLD_HEADING_RE = re.compile(r"^\*\*([^*]+)\*\*$")
 BLOCKED_MARKER_RE = re.compile(r"^(?:-\s+)?\*\*(Blocked on|Questions)\*\*:?\s*.*$")
+ID_REFERENCE_RE = re.compile(r"\b([A-Z][A-Z0-9]*-\d{3,})\b")
 PLACEHOLDER_RE = re.compile(
     r"<[^>\n]+>|\b(?:tbd|todo|clarify)\b|\bneeds\s+clarification\b",
     re.IGNORECASE,
@@ -317,6 +318,34 @@ def validate_ready_order(items: list[Item]) -> tuple[list[str], list[str]]:
     return errors, warnings
 
 
+def validate_blocked_references(
+    items: list[Item],
+) -> tuple[list[str], list[str]]:
+    errors: list[str] = []
+    warnings: list[str] = []
+    by_id: dict[str, Item] = {item.id: item for item in items}
+    for item in items:
+        if item.section != "Blocked":
+            continue
+        for line in iter_unfenced(item.body):
+            stripped = line.strip()
+            if not BLOCKED_MARKER_RE.match(stripped):
+                continue
+            for ref in ID_REFERENCE_RE.findall(stripped):
+                if ref == item.id:
+                    continue
+                target = by_id.get(ref)
+                if target is None:
+                    errors.append(
+                        f"{item.id} line {item.line}: Blocked on/Questions references unknown id {ref}"
+                    )
+                elif target.section in {"Done", "Cancelled"}:
+                    warnings.append(
+                        f"{item.id} line {item.line}: references {ref} which is now in '{target.section}' and may be retired"
+                    )
+    return errors, warnings
+
+
 def validate_in_progress(
     items: list[Item], strict: bool
 ) -> tuple[list[str], list[str]]:
@@ -365,6 +394,10 @@ def validate(
     in_progress_errors, in_progress_warnings = validate_in_progress(items, strict)
     errors.extend(in_progress_errors)
     warnings.extend(in_progress_warnings)
+
+    ref_errors, ref_warnings = validate_blocked_references(items)
+    errors.extend(ref_errors)
+    warnings.extend(ref_warnings)
 
     if not items:
         warnings.append("no queue items found")

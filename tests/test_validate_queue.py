@@ -106,6 +106,60 @@ class ValidateQueueTests(unittest.TestCase):
             self.validate_text(text, allow_done=False, strict_sections=True), 1
         )
 
+    def test_blocked_on_unknown_id_fails(self):
+        blocked_body = """### WQ-002 Investigate flaky test
+
+  - **Type**: investigation
+  - **Priority**: P2
+  - **Created**: 2026-05-23
+  - **Area**: tests
+
+**Problem / Want**
+Need an external answer.
+
+**Acceptance**
+  - [ ] Decision recorded.
+
+**Notes**
+Local checks not yet performed.
+
+**Blocked on**: WQ-999 to land first
+"""
+        text = queue_with_ready(item("WQ-001")).replace(
+            "## Blocked\n\n_None._",
+            "## Blocked\n\n" + blocked_body,
+        )
+        self.assertEqual(
+            self.validate_text(text, allow_done=False, strict_sections=True), 1
+        )
+
+    def test_blocked_on_resolved_id_passes(self):
+        blocked_body = """### WQ-002 Investigate flaky test
+
+  - **Type**: investigation
+  - **Priority**: P2
+  - **Created**: 2026-05-23
+  - **Area**: tests
+
+**Problem / Want**
+Need WQ-001 to land first.
+
+**Acceptance**
+  - [ ] Decision recorded.
+
+**Notes**
+Local checks not yet performed.
+
+**Blocked on**: WQ-001 to land first
+"""
+        text = queue_with_ready(item("WQ-001")).replace(
+            "## Blocked\n\n_None._",
+            "## Blocked\n\n" + blocked_body,
+        )
+        self.assertEqual(
+            self.validate_text(text, allow_done=False, strict_sections=True), 0
+        )
+
     def test_single_in_progress_passes(self):
         text = queue_with_ready("_None._").replace(
             "## In progress\n\n_None._",

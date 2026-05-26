@@ -20,25 +20,6 @@ _None._
 
 ## Ready
 
-### WQ-006 Validate `Blocked on: WQ-NNN` references resolve
-
-- **Type**: feature
-- **Priority**: P1
-- **Created**: 2026-05-26
-- **Area**: validator
-
-**Problem / Want**
-Items can reference other items by ID in a `Blocked on` line, but the validator never confirms the target exists. Dangling references rot silently as items get retired.
-
-**Acceptance**
-- [ ] Validator parses `Blocked on:` lines for `WQ-NNN`-style references.
-- [ ] Validator errors when a referenced ID does not exist in the same queue file.
-- [ ] Validator warns when a Blocked item references an item that is itself Done or Cancelled.
-- [ ] Regression tests cover resolved, dangling, and retired-target references.
-
-**Notes**
-`BLOCKED_MARKER_RE` at `work-queue/scripts/validate_queue.py:42` already locates the line.
-
 ### WQ-007 Warn on duplicate item titles
 
 - **Type**: feature
@@ -633,6 +614,32 @@ _None._
 _None._
 
 ## Done
+
+### WQ-006 Validate `Blocked on: WQ-NNN` references resolve
+
+- **Type**: feature
+- **Priority**: P1
+- **Created**: 2026-05-26
+- **Area**: validator
+
+**Problem / Want**
+Items could reference other items by id in a `Blocked on` line, but the validator never confirmed the target existed. Dangling references rotted silently as items got retired.
+
+**Acceptance**
+- [x] Validator parses `Blocked on:` lines for `WQ-NNN`-style references.
+- [x] Validator errors when a referenced ID does not exist in the same queue file.
+- [x] Validator warns when a Blocked item references an item that is itself Done or Cancelled.
+- [x] Regression tests cover resolved, dangling, and retired-target references.
+
+**Notes**
+Added `ID_REFERENCE_RE` and `validate_blocked_references`. Errors on unknown ids referenced from a Blocked item's `Blocked on` or `Questions` line; warns when the target is already Done or Cancelled. Two regression tests cover resolved and dangling cases.
+
+**Verification**
+- `python3 -m unittest discover -s tests`: 13 passed
+- `python3 work-queue/scripts/validate_queue.py --strict-sections WORK_QUEUE.md`: passed
+
+**Outcome**
+Changed: `work-queue/scripts/validate_queue.py`, `tests/test_validate_queue.py`.
 
 ### WQ-005 Enforce single In progress item by default
 
