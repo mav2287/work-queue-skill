@@ -20,24 +20,6 @@ _None._
 
 ## Ready
 
-### WQ-009 Promote `Done` without Verification heading to a strict-mode error
-
-- **Type**: feature
-- **Priority**: P1
-- **Created**: 2026-05-26
-- **Area**: validator
-
-**Problem / Want**
-The validator only warns when a Done item is missing a `**Verification**` heading. The skill's whole reason for existing is to prevent "Done" without verification, so this should be an error under `--strict-sections` or a new `--strict` mode.
-
-**Acceptance**
-- [ ] Done items missing a `**Verification**` heading produce an error when strict mode is enabled.
-- [ ] Default behavior remains a warning so existing queues are not broken.
-- [ ] Regression tests cover strict and non-strict behavior.
-
-**Notes**
-Current check at `work-queue/scripts/validate_queue.py:229`.
-
 ### WQ-010 Decide how to validate `agents/openai.yaml` properly
 
 - **Type**: investigation
@@ -577,6 +559,32 @@ _None._
 _None._
 
 ## Done
+
+### WQ-009 Done without Verification is now a strict-mode error
+
+- **Type**: feature
+- **Priority**: P1
+- **Created**: 2026-05-26
+- **Area**: validator
+
+**Problem / Want**
+Done without `**Verification**` was only a warning, undercutting the skill's central rule.
+
+**Acceptance**
+- [x] Done items missing a `**Verification**` heading produce an error when strict mode is enabled.
+- [x] Default behavior remains a warning so existing queues are not broken.
+- [x] Regression tests cover strict and non-strict behavior.
+
+**Notes**
+Threaded `strict` into `validate_item` and converted the existing warning into an error when `--strict` is on. The lower-priority `Done items should be retired after a durable record exists` check is unaffected and still controlled by `--allow-done`.
+
+**Verification**
+- `python3 -m unittest discover -s tests`: 17 passed
+- `python3 work-queue/scripts/validate_queue.py --strict-sections WORK_QUEUE.md`: passed
+- `python3 work-queue/scripts/validate_queue.py --strict WORK_QUEUE.md`: passed (Done items here already carry Verification headings)
+
+**Outcome**
+Changed: `work-queue/scripts/validate_queue.py`, `tests/test_validate_queue.py`.
 
 ### WQ-008 Range-check Created dates
 

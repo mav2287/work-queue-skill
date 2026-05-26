@@ -106,6 +106,40 @@ class ValidateQueueTests(unittest.TestCase):
             self.validate_text(text, allow_done=False, strict_sections=True), 1
         )
 
+    def test_done_without_verification_warns_default_errors_strict(self):
+        done_item = """### WQ-009 Old fix
+
+- **Type**: bug
+- **Priority**: P1
+- **Created**: 2026-05-23
+- **Area**: tests
+
+**Problem / Want**
+Was fixed.
+
+**Acceptance**
+- [x] Fixed.
+
+**Notes**
+Done without a Verification heading.
+"""
+        text = queue_with_ready(item("WQ-001")).replace(
+            "## Done\n\n_None._",
+            "## Done\n\n" + done_item,
+        )
+        self.assertEqual(
+            self.validate_text(
+                text, allow_done=True, strict_sections=True
+            ),
+            0,
+        )
+        self.assertEqual(
+            self.validate_text(
+                text, allow_done=True, strict_sections=True, strict=True
+            ),
+            1,
+        )
+
     def test_future_created_date_warns(self):
         future_item = item("WQ-001").replace(
             "**Created**: 2026-05-23", "**Created**: 2099-12-31"

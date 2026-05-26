@@ -182,7 +182,9 @@ def has_blocked_marker(item: Item) -> bool:
     return any(BLOCKED_MARKER_RE.match(line.strip()) for line in iter_unfenced(item.body))
 
 
-def validate_item(item: Item, allow_done: bool) -> tuple[list[str], list[str]]:
+def validate_item(
+    item: Item, allow_done: bool, strict: bool = False
+) -> tuple[list[str], list[str]]:
     errors: list[str] = []
     warnings: list[str] = []
     fields = extract_fields(item)
@@ -248,7 +250,11 @@ def validate_item(item: Item, allow_done: bool) -> tuple[list[str], list[str]]:
                 f"{prefix}: Done items should be retired after a durable record exists"
             )
         if not has_heading(item, "Verification"):
-            warnings.append(f"{prefix}: Done item should record verification in Notes")
+            message = f"{prefix}: Done item must record verification in Notes"
+            if strict:
+                errors.append(message)
+            else:
+                warnings.append(message)
 
     if item.section == "Blocked":
         if not has_blocked_marker(item):
@@ -420,7 +426,7 @@ def validate(
             )
         seen[item.id] = item.line
 
-        item_errors, item_warnings = validate_item(item, allow_done)
+        item_errors, item_warnings = validate_item(item, allow_done, strict=strict)
         errors.extend(item_errors)
         warnings.extend(item_warnings)
 
