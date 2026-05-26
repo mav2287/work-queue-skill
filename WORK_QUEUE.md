@@ -20,24 +20,6 @@ _None._
 
 ## Ready
 
-### WQ-014 Document validator exit codes and CLI surface
-
-- **Type**: docs
-- **Priority**: P1
-- **Created**: 2026-05-26
-- **Area**: docs
-
-**Problem / Want**
-Exit code 2 (file not found) is undocumented. The README mentions the validator but does not describe flags, exit codes, or recommended CI usage.
-
-**Acceptance**
-- [ ] README has a Validator section listing every flag, exit code, and an example CI invocation.
-- [ ] `--help` output matches the documented surface.
-- [ ] Skill `SKILL.md` Validation section links to the README rather than duplicating it.
-
-**Notes**
-Current docs are scattered between `README.md:55-65` and `SKILL.md:84-92`.
-
 ### WQ-015 Expand unit-test coverage for `validate_queue.py`
 
 - **Type**: chore
@@ -485,6 +467,32 @@ _None._
 _None._
 
 ## Done
+
+### WQ-014 Document validator exit codes and CLI surface
+
+- **Type**: docs
+- **Priority**: P1
+- **Created**: 2026-05-26
+- **Area**: docs
+
+**Problem / Want**
+Exit code 2 was undocumented; README mentioned the validator without flags, exit codes, or CI usage.
+
+**Acceptance**
+- [x] README has a Validator section listing every flag, exit code, and an example CI invocation.
+- [x] `--help` output matches the documented surface.
+- [x] Skill `SKILL.md` Validation section links to the README rather than duplicating it.
+
+**Notes**
+Added a Validators section to README covering both scripts, with two reference tables (flags and exit codes) and a recommended CI invocation. Shortened SKILL.md's Validation block to a brief snippet that points at the README for the full surface. Verified that `--help` output matches the documented flag set.
+
+**Verification**
+- `python3 -m unittest discover -s tests`: 25 passed
+- `python3 scripts/validate_skill.py work-queue`: passed
+- `python3 work-queue/scripts/validate_queue.py --help`: every flag in the README table appears
+
+**Outcome**
+Changed: `README.md` (new Validators section), `work-queue/SKILL.md` (Validation section now references README).
 
 ### WQ-013 Add --json output for editor and agent integration
 

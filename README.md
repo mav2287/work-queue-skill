@@ -75,17 +75,59 @@ The default queue file is `WORK_QUEUE.md`. A starter template lives at:
 work-queue/templates/WORK_QUEUE.md
 ```
 
-The validator can check queue structure:
+## Validators
+
+Two stdlib-only validators ship with the skill.
+
+### `validate_queue.py`
+
+Checks a queue file (or a list of them) against the format rules in
+[work-queue/references/queue-format.md](work-queue/references/queue-format.md).
 
 ```bash
 python3 work-queue/scripts/validate_queue.py WORK_QUEUE.md
+python3 work-queue/scripts/validate_queue.py --strict-sections queues/*.md
+python3 work-queue/scripts/validate_queue.py --strict WORK_QUEUE.md
+python3 work-queue/scripts/validate_queue.py --fix WORK_QUEUE.md
+python3 work-queue/scripts/validate_queue.py --json WORK_QUEUE.md | jq .
 ```
 
-The package validator checks skill metadata and bundled file links:
+Flags:
+
+| Flag | Effect |
+|---|---|
+| `--allow-done` | Suppress the "Done items should be retired" warning. |
+| `--strict-sections` | Require the canonical section set and ordering. |
+| `--strict` | Promote opinionated warnings (multiple In progress, missing Verification on Done) to errors. Implies `--strict-sections`. |
+| `--fix` | Canonicalize section order, sort Ready by priority/date/id, and trim whitespace. Rewrites in place. |
+| `--fix --check` | Exit non-zero if `--fix` would change the file; do not write. |
+| `--json` | Emit one JSON document on stdout instead of human-readable lines. |
+
+Exit codes:
+
+| Code | Meaning |
+|---|---|
+| `0` | All files valid (warnings allowed). |
+| `1` | At least one file has an error. |
+| `2` | Input file not found. |
+
+Recommended CI invocation:
+
+```bash
+python3 work-queue/scripts/validate_queue.py --strict WORK_QUEUE.md
+```
+
+### `validate_skill.py`
+
+Smoke-checks the packaged skill itself: SKILL.md frontmatter, that
+internal markdown links resolve, that Python script references
+resolve, and that `agents/openai.yaml` contains the expected keys.
 
 ```bash
 python3 scripts/validate_skill.py work-queue
 ```
+
+Exits `0` when the skill is well-formed, `1` otherwise.
 
 ## Repository Status
 

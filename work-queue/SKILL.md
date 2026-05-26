@@ -81,15 +81,23 @@ Do not silently change scope. If the implementation reveals a separate problem, 
 
 ## Validation
 
-Run the validator when creating or changing a queue:
+Run the bundled validator when creating or changing a queue. Resolve
+the path relative to this `SKILL.md` file; the script lives at
+`scripts/validate_queue.py` inside the installed skill directory.
+
+Common invocations (full flag and exit-code reference lives in the
+project README's Validators section):
 
 ```bash
-python3 /absolute/path/to/installed/work-queue/scripts/validate_queue.py WORK_QUEUE.md
+python3 <skill-dir>/scripts/validate_queue.py WORK_QUEUE.md
+python3 <skill-dir>/scripts/validate_queue.py --strict WORK_QUEUE.md
+python3 <skill-dir>/scripts/validate_queue.py --fix WORK_QUEUE.md
 ```
 
-Resolve the script path relative to this `SKILL.md` file; the bundled validator lives at `scripts/validate_queue.py`.
-
-Use `--allow-done` when the project intentionally keeps Done items temporarily.
+Use `--allow-done` when the project intentionally keeps Done items
+temporarily. Use `--strict` to require canonical sections and treat
+opinionated warnings (multiple In progress, Done without
+`**Verification**`) as errors.
 
 ## Retention
 
