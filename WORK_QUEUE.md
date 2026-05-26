@@ -20,23 +20,6 @@ _None._
 
 ## Ready
 
-### WQ-038 Add markdownlint to CI
-
-- **Type**: chore
-- **Priority**: P3
-- **Created**: 2026-05-26
-- **Area**: ci
-
-**Problem / Want**
-Skill content is all markdown; no linter enforces consistent heading levels, list markers, or trailing whitespace.
-
-**Acceptance**
-- [ ] `markdownlint-cli2` (or equivalent) runs in CI against `README.md`, `work-queue/**/*.md`, and `tests/fixtures/**/*.md`.
-- [ ] Configuration tuned to skip rules that conflict with queue-format requirements.
-
-**Notes**
-Watch for rules that flag the deeply-nested checkbox patterns used in acceptance lists.
-
 ### WQ-039 Verify the LICENSE year and copyright
 
 - **Type**: chore
@@ -129,6 +112,30 @@ _None._
 _None._
 
 ## Done
+
+### WQ-038 markdownlint in CI
+
+- **Type**: chore
+- **Priority**: P3
+- **Created**: 2026-05-26
+- **Area**: ci
+
+**Problem / Want**
+Skill content was all markdown with no linter; regressions in formatting (mismatched heading depth, missing list spacing, broken tables) slipped through.
+
+**Acceptance**
+- [x] `markdownlint-cli2` (or equivalent) runs in CI against `README.md`, `work-queue/**/*.md`, and `tests/fixtures/**/*.md`.
+- [x] Configuration tuned to skip rules that conflict with queue-format requirements.
+
+**Notes**
+Added `.markdownlint-cli2.yaml` with explicit `globs`/`ignores`. Disabled rules that fight the queue format: MD013 (line length), MD032 (blanks around lists — items put list right after `**Heading**`), MD036 (emphasis as heading), MD041 (first-line H1), MD033 (inline HTML for `<!-- ... -->`), MD034 (bare URLs), MD040 (language-less fences), MD060 (table style). MD024 set to `siblings_only` so duplicate `### WQ-NNN` titles under different sections do not error. Ignored: `tests/fixtures/**` (intentionally broken), `work-queue/templates/item.md` (placeholder syntax), `CODE_REVIEW.md` (pre-drain audit artifact). Verified locally: 19 files linted, 0 errors. New `markdownlint` CI job runs on every push; uses `npx --yes markdownlint-cli2` so no `package.json` is needed in the repo.
+
+**Verification**
+- `npx --yes markdownlint-cli2`: 19 files linted, 0 errors
+- `python3 -m unittest discover -s tests`: 42 passed
+
+**Outcome**
+Added: `.markdownlint-cli2.yaml`, `markdownlint` job in `.github/workflows/ci.yml`. Changed: `CHANGELOG.md` (Unreleased).
 
 ### WQ-037 mypy --strict in CI
 

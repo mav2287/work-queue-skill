@@ -15,6 +15,8 @@ this project adheres to [Semantic Versioning](https://semver.org).
 - `Codex Interface Descriptor` section in the README plus a comment
   header in `work-queue/agents/openai.yaml` linking to the schema.
 - CI step that runs `mypy --strict` against both validators.
+- CI job that runs `markdownlint-cli2` against repo markdown with a
+  config tuned to allow the queue format.
 
 ## [0.1.0] — 2026-05-26
 

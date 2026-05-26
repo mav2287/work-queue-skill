@@ -1,0 +1,30 @@
+# markdownlint-cli2 config for the work-queue skill.
+#
+# Several rules conflict with the documented queue format: items use
+# emphasis-style subsection headings (**Problem / Want**, **Acceptance**),
+# the queue file deliberately has many sibling **Verification** /
+# **Outcome** blocks, and reference docs use long lines for readability.
+# Disable those rules rather than rewriting the format.
+
+globs:
+  - "**/*.md"
+
+ignores:
+  - "node_modules/**"
+  - ".venv/**"
+  - "tests/fixtures/**"
+  - "work-queue/templates/item.md"
+  - "CODE_REVIEW.md"
+
+config:
+  default: true
+  MD013: false  # line-length: docs use long lines for readability
+  MD024:
+    siblings_only: true  # allow duplicate headings under different parents
+  MD036: false  # emphasis-as-heading: the format uses **X** subsections
+  MD041: false  # first-line-h1: starter template and examples skip the H1
+  MD033: false  # inline-html: SKILL.md and templates use <!-- ... --> comments
+  MD034: false  # bare-urls: reference docs include bare URLs
+  MD040: false  # fenced-code-language: some snippets are language-agnostic
+  MD032: false  # blanks-around-lists: format puts lists right after **Heading**
+  MD060: false  # table-column-style: use compact tables in the README
