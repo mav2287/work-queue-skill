@@ -20,22 +20,6 @@ _None._
 
 ## Ready
 
-### WQ-039 Verify the LICENSE year and copyright
-
-- **Type**: chore
-- **Priority**: P3
-- **Created**: 2026-05-26
-- **Area**: packaging
-
-**Problem / Want**
-LICENSE year and holder were not audited. A wrong year is harmless; an unverified copyright line is a small papercut.
-
-**Acceptance**
-- [ ] LICENSE shows the correct year (2026 today) and the intended holder name.
-
-**Notes**
-File: `LICENSE`.
-
 ### WQ-040 Submit to awesome-claude-code
 
 - **Type**: chore
@@ -112,6 +96,28 @@ _None._
 _None._
 
 ## Done
+
+### WQ-039 LICENSE year and holder verified
+
+- **Type**: chore
+- **Priority**: P3
+- **Created**: 2026-05-26
+- **Area**: packaging
+
+**Problem / Want**
+LICENSE year and holder had not been audited.
+
+**Acceptance**
+- [x] LICENSE shows the correct year (2026 today) and the intended holder name.
+
+**Notes**
+`LICENSE:3` reads `Copyright (c) 2026 mav2287`. Year matches today's date (2026-05-26); holder matches the repository owner. No change needed; this item is a paper-trail entry.
+
+**Verification**
+- `grep -n 'Copyright' LICENSE`: `Copyright (c) 2026 mav2287`
+
+**Outcome**
+No file change. Item retired as a verification record.
 
 ### WQ-038 markdownlint in CI
 
