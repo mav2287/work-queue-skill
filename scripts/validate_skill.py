@@ -1,5 +1,13 @@
 #!/usr/bin/env python3
-"""Validate the packaged work-queue skill without third-party dependencies."""
+"""Smoke-check the packaged work-queue skill without third-party dependencies.
+
+This validator checks structural invariants that are cheap to verify
+with the stdlib alone: SKILL.md frontmatter shape, that internal
+markdown links and Python script references resolve, and that the
+Codex interface file contains the expected keys. Deep YAML parsing is
+intentionally out of scope; broken YAML will surface when the host
+agent loads the skill.
+"""
 
 from __future__ import annotations
 
@@ -58,7 +66,16 @@ def validate_markdown_links(skill_dir: Path, skill_text: str) -> list[str]:
     return errors
 
 
-def validate_openai_yaml(skill_dir: Path, skill_name: str) -> list[str]:
+def check_openai_yaml_presence(skill_dir: Path, skill_name: str) -> list[str]:
+    """Smoke-check that the Codex interface file has the expected keys.
+
+    This is a presence check, not a real YAML parse. It uses anchored
+    regular expressions to verify each required key appears at the
+    documented indent level. Real YAML errors (bad nesting, duplicate
+    keys, wrong scalar types) are not detected — they will surface when
+    Codex itself loads the skill. The trade-off keeps the validator
+    free of third-party dependencies.
+    """
     errors: list[str] = []
     metadata = skill_dir / "agents" / "openai.yaml"
     if not metadata.exists():
@@ -77,9 +94,15 @@ def validate_openai_yaml(skill_dir: Path, skill_name: str) -> list[str]:
             default_prompt = match.group(1)
 
     if default_prompt and f"${skill_name}" not in default_prompt:
-        errors.append(f"agents/openai.yaml default_prompt should mention ${skill_name}")
+        errors.append(
+            f"agents/openai.yaml default_prompt should mention ${skill_name}"
+        )
 
     return errors
+
+
+# Back-compat alias for any external callers.
+validate_openai_yaml = check_openai_yaml_presence
 
 
 def validate_referenced_scripts(skill_dir: Path, skill_text: str) -> list[str]:
@@ -130,7 +153,7 @@ def validate(skill_dir: Path) -> int:
         errors.extend(validate_markdown_links(skill_dir, skill_text))
         errors.extend(validate_referenced_scripts(skill_dir, skill_text))
         if skill_name:
-            errors.extend(validate_openai_yaml(skill_dir, skill_name))
+            errors.extend(check_openai_yaml_presence(skill_dir, skill_name))
 
     for error in errors:
         print(f"ERROR: {error}", file=sys.stderr)

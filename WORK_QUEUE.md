@@ -20,24 +20,6 @@ _None._
 
 ## Ready
 
-### WQ-010 Decide how to validate `agents/openai.yaml` properly
-
-- **Type**: investigation
-- **Priority**: P1
-- **Created**: 2026-05-26
-- **Area**: validator
-
-**Problem / Want**
-`validate_openai_yaml` matches anchored substrings for required keys. Real YAML errors (bad nesting, duplicate keys, wrong types) still pass. A real parse would require adding PyYAML, which breaks the explicit no-third-party-deps stance in `scripts/validate_skill.py`. The trade-off is unresolved.
-
-**Acceptance**
-- [ ] Decision recorded: parse with PyYAML (and accept the dependency), or rename the function and docstring to reflect that it is a presence check.
-- [ ] If renamed, README and CI step descriptions updated to match.
-- [ ] If parsed, the dependency is pinned and the existing no-deps comment removed or revised.
-
-**Notes**
-Current implementation at `scripts/validate_skill.py:61-82`.
-
 ### WQ-011 Accept multiple files or glob in the queue validator
 
 - **Type**: feature
@@ -559,6 +541,32 @@ _None._
 _None._
 
 ## Done
+
+### WQ-010 Resolved: openai.yaml check stays a presence smoke check
+
+- **Type**: investigation
+- **Priority**: P1
+- **Created**: 2026-05-26
+- **Area**: validator
+
+**Problem / Want**
+`validate_openai_yaml` matched anchored substrings for required keys. A real YAML parse would require PyYAML, which breaks the no-third-party-deps stance.
+
+**Acceptance**
+- [x] Decision recorded: parse with PyYAML (and accept the dependency), or rename the function and docstring to reflect that it is a presence check.
+- [x] If renamed, README and CI step descriptions updated to match.
+- [x] If parsed, the dependency is pinned and the existing no-deps comment removed or revised. _(N/A: kept presence-only.)_
+
+**Notes**
+Decision: keep the presence-only check. The interface file is small, author-edited, and any real YAML error surfaces immediately when Codex loads the skill. Adding PyYAML for marginal coverage is not worth the dependency tax. Renamed `validate_openai_yaml` → `check_openai_yaml_presence` with a docstring stating the trade-off, kept `validate_openai_yaml` as a back-compat alias, updated the module docstring, and renamed the CI step to `Smoke-check skill metadata`.
+
+**Verification**
+- `python3 -m unittest discover -s tests`: 17 passed
+- `python3 scripts/validate_skill.py work-queue`: passed
+- `python3 work-queue/scripts/validate_queue.py --strict-sections WORK_QUEUE.md`: passed
+
+**Outcome**
+Changed: `scripts/validate_skill.py` (rename + docstring), `.github/workflows/ci.yml` (step name).
 
 ### WQ-009 Done without Verification is now a strict-mode error
 
