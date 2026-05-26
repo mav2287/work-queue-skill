@@ -20,25 +20,6 @@ _None._
 
 ## Ready
 
-### WQ-025 Validator warning for Inbox growth and staleness
-
-- **Type**: feature
-- **Priority**: P2
-- **Created**: 2026-05-26
-- **Area**: validator
-
-**Problem / Want**
-An unbounded Inbox is the queue's failure mode. There is no signal when triage debt accumulates.
-
-**Acceptance**
-- [ ] Validator warns when Inbox holds more than a configurable threshold (default 25).
-- [ ] Validator warns when any Inbox item has a Created date older than a configurable threshold (default 30 days).
-- [ ] Thresholds are flags on the validator and are documented in the README.
-- [ ] Regression tests cover under/over the threshold.
-
-**Notes**
-Same mechanism can later cover stale Blocked items.
-
 ### WQ-026 Cut a v0.1.0 release with CHANGELOG and a git tag
 
 - **Type**: chore
@@ -289,6 +270,32 @@ _None._
 _None._
 
 ## Done
+
+### WQ-025 Validator warning for Inbox growth and staleness
+
+- **Type**: feature
+- **Priority**: P2
+- **Created**: 2026-05-26
+- **Area**: validator
+
+**Problem / Want**
+Unbounded Inbox is the queue's failure mode; nothing signaled triage debt.
+
+**Acceptance**
+- [x] Validator warns when Inbox holds more than a configurable threshold (default 25).
+- [x] Validator warns when any Inbox item has a Created date older than a configurable threshold (default 30 days).
+- [x] Thresholds are flags on the validator and are documented in the README.
+- [x] Regression tests cover under/over the threshold.
+
+**Notes**
+Added `validate_inbox` with `--max-inbox-size N` (default 25) and `--max-inbox-age-days D` (default 30) flags; setting either to 0 disables that check. Wired through `collect`, `validate`, and the JSON path so the flags work uniformly. README's flag table picks up the two new flags. Two regression tests cover the size and the staleness warning.
+
+**Verification**
+- `python3 -m unittest discover -s tests`: 42 passed
+- `python3 work-queue/scripts/validate_queue.py --max-inbox-size 0 --max-inbox-age-days 0 --strict-sections WORK_QUEUE.md`: passed
+
+**Outcome**
+Changed: `work-queue/scripts/validate_queue.py`, `tests/test_validate_queue.py`, `README.md`.
 
 ### WQ-024 Warn against pasting secrets into queue Notes
 

@@ -400,6 +400,34 @@ def validate_blocked_references(
     return errors, warnings
 
 
+DEFAULT_MAX_INBOX_SIZE = 25
+DEFAULT_MAX_INBOX_AGE_DAYS = 30
+
+
+def validate_inbox(
+    items: list[Item], max_size: int, max_age_days: int
+) -> tuple[list[str], list[str]]:
+    warnings: list[str] = []
+    inbox = [item for item in items if item.section == "Inbox"]
+    if max_size > 0 and len(inbox) > max_size:
+        warnings.append(
+            f"Inbox holds {len(inbox)} items; triage threshold is {max_size}"
+        )
+    if max_age_days > 0:
+        today = date.today()
+        for item in inbox:
+            fields = extract_fields(item)
+            created = parse_date(fields.get("Created", ""))
+            if created is None:
+                continue
+            age_days = (today - created).days
+            if age_days > max_age_days:
+                warnings.append(
+                    f"{item.id} line {item.line}: Inbox item has been waiting {age_days} days (threshold {max_age_days})"
+                )
+    return [], warnings
+
+
 def validate_in_progress(
     items: list[Item], strict: bool
 ) -> tuple[list[str], list[str]]:
@@ -575,6 +603,8 @@ def collect(
     allow_done: bool,
     strict_sections: bool,
     strict: bool = False,
+    max_inbox_size: int = DEFAULT_MAX_INBOX_SIZE,
+    max_inbox_age_days: int = DEFAULT_MAX_INBOX_AGE_DAYS,
 ) -> tuple[list[str], list[str], int]:
     if strict:
         strict_sections = True
@@ -614,6 +644,12 @@ def collect(
     errors.extend(dup_errors)
     warnings.extend(dup_warnings)
 
+    inbox_errors, inbox_warnings = validate_inbox(
+        items, max_inbox_size, max_inbox_age_days
+    )
+    errors.extend(inbox_errors)
+    warnings.extend(inbox_warnings)
+
     if not items:
         warnings.append("no queue items found")
 
@@ -625,9 +661,16 @@ def validate(
     allow_done: bool,
     strict_sections: bool,
     strict: bool = False,
+    max_inbox_size: int = DEFAULT_MAX_INBOX_SIZE,
+    max_inbox_age_days: int = DEFAULT_MAX_INBOX_AGE_DAYS,
 ) -> int:
     errors, warnings, item_count = collect(
-        path, allow_done, strict_sections, strict=strict
+        path,
+        allow_done,
+        strict_sections,
+        strict=strict,
+        max_inbox_size=max_inbox_size,
+        max_inbox_age_days=max_inbox_age_days,
     )
 
     for message in warnings:
@@ -697,6 +740,18 @@ def main() -> int:
         "--json",
         action="store_true",
         help="Emit findings as one JSON document on stdout instead of human-readable lines.",
+    )
+    parser.add_argument(
+        "--max-inbox-size",
+        type=int,
+        default=DEFAULT_MAX_INBOX_SIZE,
+        help=f"Warn when Inbox holds more than N items (default {DEFAULT_MAX_INBOX_SIZE}, 0 disables).",
+    )
+    parser.add_argument(
+        "--max-inbox-age-days",
+        type=int,
+        default=DEFAULT_MAX_INBOX_AGE_DAYS,
+        help=f"Warn when an Inbox item is older than N days (default {DEFAULT_MAX_INBOX_AGE_DAYS}, 0 disables).",
     )
     parser.add_argument(
         "--check",
@@ -774,6 +829,8 @@ def main() -> int:
             args.allow_done,
             args.strict_sections,
             strict=args.strict,
+            max_inbox_size=args.max_inbox_size,
+            max_inbox_age_days=args.max_inbox_age_days,
         )
         worst = max(worst, result)
     return worst

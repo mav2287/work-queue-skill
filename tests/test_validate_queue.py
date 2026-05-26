@@ -530,6 +530,40 @@ _None._
                 sys.argv = argv
         self.assertEqual(code, 0)
 
+    def test_inbox_over_threshold_warns(self):
+        items = "\n".join(item(f"WQ-{n:03d}") for n in range(1, 5))
+        text = queue_with_ready("_None._").replace(
+            "## Inbox\n\n_None._",
+            "## Inbox\n\n" + items,
+        )
+        code, err = self.validate_capture(
+            text,
+            allow_done=False,
+            strict_sections=True,
+            max_inbox_size=2,
+            max_inbox_age_days=0,
+        )
+        self.assertEqual(code, 0)
+        self.assertIn("Inbox holds 4 items", err)
+
+    def test_inbox_stale_item_warns(self):
+        old = item("WQ-001").replace(
+            "**Created**: 2026-05-23", "**Created**: 2025-01-01"
+        )
+        text = queue_with_ready("_None._").replace(
+            "## Inbox\n\n_None._",
+            "## Inbox\n\n" + old,
+        )
+        code, err = self.validate_capture(
+            text,
+            allow_done=False,
+            strict_sections=True,
+            max_inbox_size=0,
+            max_inbox_age_days=30,
+        )
+        self.assertEqual(code, 0)
+        self.assertIn("Inbox item has been waiting", err)
+
     def test_blocked_on_unknown_id_fails(self):
         blocked_body = """### WQ-002 Investigate flaky test
 
