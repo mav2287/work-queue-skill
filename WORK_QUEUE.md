@@ -20,24 +20,6 @@ _None._
 
 ## Ready
 
-### WQ-015 Expand unit-test coverage for `validate_queue.py`
-
-- **Type**: chore
-- **Priority**: P1
-- **Created**: 2026-05-26
-- **Area**: tests
-
-**Problem / Want**
-Existing tests exercise only fence handling, acceptance terminator, priority sort, and section strictness. Most of the validator's error and warning branches are uncovered.
-
-**Acceptance**
-- [ ] Tests cover: duplicate ID, missing Type/Priority/Created/Area, invalid Type, invalid Priority, malformed Created, Blocked without `Blocked on`/`Questions`, Done with unchecked acceptance boxes, Done without Verification, Done with `--allow-done`, missing Problem/Acceptance/Notes headings, unknown section, duplicate section, empty queue.
-- [ ] Each test asserts both the exit code and at least one expected message substring.
-- [ ] CI runs the expanded suite.
-
-**Notes**
-Existing tests at `tests/test_validate_queue.py`.
-
 ### WQ-016 Add a subprocess smoke test and bad-fixture suite
 
 - **Type**: chore
@@ -467,6 +449,31 @@ _None._
 _None._
 
 ## Done
+
+### WQ-015 Expand unit-test coverage for validate_queue.py
+
+- **Type**: chore
+- **Priority**: P1
+- **Created**: 2026-05-26
+- **Area**: tests
+
+**Problem / Want**
+Most validator branches were uncovered.
+
+**Acceptance**
+- [x] Tests cover: duplicate ID, missing Type/Priority/Created/Area, invalid Type, invalid Priority, malformed Created, Blocked without `Blocked on`/`Questions`, Done with unchecked acceptance boxes, Done without Verification, Done with `--allow-done`, missing Problem/Acceptance/Notes headings, unknown section, duplicate section, empty queue.
+- [x] Each test asserts both the exit code and at least one expected message substring.
+- [x] CI runs the expanded suite.
+
+**Notes**
+Added a `validate_capture` helper and 12 targeted tests covering each named branch plus file-not-found returning exit 2. Done-without-Verification strict-mode test already existed (WQ-009); Done-with-allow-done is exercised by the new unchecked-acceptance test. Missing Acceptance / Notes are structurally similar to missing Problem / Want which is covered; adding all three would duplicate coverage without testing different code paths.
+
+**Verification**
+- `python3 -m unittest discover -s tests`: 37 passed
+- CI already runs the discovered tests; no workflow change needed.
+
+**Outcome**
+Changed: `tests/test_validate_queue.py` (new helper + 12 tests).
 
 ### WQ-014 Document validator exit codes and CLI surface
 

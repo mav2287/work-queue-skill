@@ -80,6 +80,158 @@ class ValidateQueueTests(unittest.TestCase):
             ):
                 return validate_queue.validate(path, **kwargs)
 
+    def validate_capture(self, text: str, **kwargs) -> tuple[int, str]:
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "WORK_QUEUE.md"
+            path.write_text(text, encoding="utf-8")
+            stderr = io.StringIO()
+            with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(
+                stderr
+            ):
+                code = validate_queue.validate(path, **kwargs)
+        return code, stderr.getvalue()
+
+    def test_duplicate_id_fails(self):
+        text = queue_with_ready(item("WQ-001") + "\n" + item("WQ-001"))
+        code, err = self.validate_capture(
+            text, allow_done=False, strict_sections=True
+        )
+        self.assertEqual(code, 1)
+        self.assertIn("duplicate ID", err)
+
+    def test_missing_type_field_fails(self):
+        bad = item("WQ-001").replace("  - **Type**: bug\n", "")
+        code, err = self.validate_capture(
+            queue_with_ready(bad), allow_done=False, strict_sections=True
+        )
+        self.assertEqual(code, 1)
+        self.assertIn("missing field 'Type'", err)
+
+    def test_invalid_type_fails(self):
+        bad = item("WQ-001").replace("**Type**: bug", "**Type**: spaghetti")
+        code, err = self.validate_capture(
+            queue_with_ready(bad), allow_done=False, strict_sections=True
+        )
+        self.assertEqual(code, 1)
+        self.assertIn("invalid Type 'spaghetti'", err)
+
+    def test_invalid_priority_fails(self):
+        bad = item("WQ-001").replace("**Priority**: P1", "**Priority**: P9")
+        code, err = self.validate_capture(
+            queue_with_ready(bad), allow_done=False, strict_sections=True
+        )
+        self.assertEqual(code, 1)
+        self.assertIn("invalid Priority 'P9'", err)
+
+    def test_malformed_created_fails(self):
+        bad = item("WQ-001").replace(
+            "**Created**: 2026-05-23", "**Created**: yesterday"
+        )
+        code, err = self.validate_capture(
+            queue_with_ready(bad), allow_done=False, strict_sections=True
+        )
+        self.assertEqual(code, 1)
+        self.assertIn("Created must be YYYY-MM-DD", err)
+
+    def test_blocked_without_marker_fails(self):
+        blocked = item("WQ-001").replace(
+            "### WQ-001 Fix sample bug", "### WQ-001 Investigate"
+        )
+        text = queue_with_ready("_None._").replace(
+            "## Blocked\n\n_None._",
+            "## Blocked\n\n" + blocked,
+        )
+        code, err = self.validate_capture(
+            text, allow_done=False, strict_sections=True
+        )
+        self.assertEqual(code, 1)
+        self.assertIn("Blocked item needs", err)
+
+    def test_done_with_unchecked_acceptance_fails(self):
+        done_body = item("WQ-001") + "\n**Verification**\n- ok\n"
+        text = queue_with_ready("_None._").replace(
+            "## Done\n\n_None._",
+            "## Done\n\n" + done_body,
+        )
+        code, err = self.validate_capture(
+            text, allow_done=True, strict_sections=True
+        )
+        self.assertEqual(code, 1)
+        self.assertIn("unchecked acceptance boxes", err)
+
+    def test_missing_problem_section_fails(self):
+        bad = item("WQ-001").replace("**Problem / Want**", "**Problem**")
+        code, err = self.validate_capture(
+            queue_with_ready(bad), allow_done=False, strict_sections=True
+        )
+        self.assertEqual(code, 1)
+        self.assertIn("missing Problem / Want", err)
+
+    def test_unknown_section_fails(self):
+        text = queue_with_ready(item("WQ-001")) + "\n## Bogus\n\n_None._\n"
+        code, err = self.validate_capture(
+            text, allow_done=False, strict_sections=False
+        )
+        self.assertEqual(code, 1)
+        self.assertIn("unknown section 'Bogus'", err)
+
+    def test_duplicate_section_fails(self):
+        text = queue_with_ready(item("WQ-001")) + "\n## Ready\n\n_None._\n"
+        code, err = self.validate_capture(
+            text, allow_done=False, strict_sections=True
+        )
+        self.assertEqual(code, 1)
+        self.assertIn("duplicate section 'Ready'", err)
+
+    def test_empty_queue_warns(self):
+        text = """# Work Queue
+
+## In progress
+
+_None._
+
+## Blocked
+
+_None._
+
+## Ready
+
+_None._
+
+## Needs refinement
+
+_None._
+
+## Inbox
+
+_None._
+
+## Done
+
+_None._
+
+## Cancelled
+
+_None._
+"""
+        code, err = self.validate_capture(
+            text, allow_done=False, strict_sections=True
+        )
+        self.assertEqual(code, 0)
+        self.assertIn("no queue items found", err)
+
+    def test_file_not_found_returns_two(self):
+        argv = sys.argv
+        sys.argv = ["validate_queue.py", "/nonexistent/path/WORK_QUEUE.md"]
+        try:
+            with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(
+                io.StringIO()
+            ):
+                code = validate_queue.main()
+        finally:
+            sys.argv = argv
+        self.assertEqual(code, 2)
+
     def test_fenced_queue_snippet_does_not_create_items_or_sections(self):
         fenced = """```markdown
 ## Ready
