@@ -24,9 +24,19 @@ python3 work-queue/scripts/validate_queue.py --strict-sections \
     work-queue/examples/done-with-outcome.md
 ```
 
-No third-party dependencies. The validators run on a clean stdlib
-install; do not introduce a dependency without a recorded decision in
-`CHANGELOG.md`.
+No third-party dependencies in the **runtime** scripts. The validators
+themselves run on a clean stdlib install; do not introduce a runtime
+dependency without a recorded decision in `CHANGELOG.md`.
+
+Development tools (mypy, pre-commit) live in CI and the
+`.pre-commit-config.yaml` only — they do not ship with the skill.
+
+To run the type-check locally:
+
+```bash
+python3 -m venv .venv && .venv/bin/pip install mypy==2.1.0
+.venv/bin/mypy --strict scripts/validate_skill.py work-queue/scripts/validate_queue.py
+```
 
 ### Optional: pre-commit hooks
 

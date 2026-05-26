@@ -29,6 +29,10 @@ jobs:
           fi
       - name: Compile scripts
         run: python3 -m py_compile scripts/validate_skill.py work-queue/scripts/validate_queue.py
+      - name: Install dev tools
+        run: python3 -m pip install --quiet mypy==2.1.0
+      - name: Type-check validators
+        run: python3 -m mypy --strict scripts/validate_skill.py work-queue/scripts/validate_queue.py
       - name: Smoke-check skill metadata
         run: python3 scripts/validate_skill.py work-queue
       - name: Validate starter queue

@@ -20,23 +20,6 @@ _None._
 
 ## Ready
 
-### WQ-037 Add `mypy --strict` on the validator scripts
-
-- **Type**: chore
-- **Priority**: P3
-- **Created**: 2026-05-26
-- **Area**: ci
-
-**Problem / Want**
-The validators are typed by convention but not checked. Adding `mypy --strict` is cheap and catches a real class of bugs in regex-heavy code.
-
-**Acceptance**
-- [ ] `mypy --strict scripts/validate_skill.py work-queue/scripts/validate_queue.py` runs in CI and passes.
-- [ ] Any new typing dependencies are dev-only.
-
-**Notes**
-The current `int | None` annotations already require Python 3.10, which CI uses.
-
 ### WQ-038 Add markdownlint to CI
 
 - **Type**: chore
@@ -146,6 +129,30 @@ _None._
 _None._
 
 ## Done
+
+### WQ-037 mypy --strict in CI
+
+- **Type**: chore
+- **Priority**: P3
+- **Created**: 2026-05-26
+- **Area**: ci
+
+**Problem / Want**
+The validators were typed by convention but not type-checked.
+
+**Acceptance**
+- [x] `mypy --strict scripts/validate_skill.py work-queue/scripts/validate_queue.py` runs in CI and passes.
+- [x] Any new typing dependencies are dev-only.
+
+**Notes**
+Ran `mypy --strict` locally and surfaced four warnings (one missing return-type annotation on `iter_unfenced`, three generic `dict` types without parameters). Fixed all four: added `Iterator[str]` return type for `iter_unfenced`, parameterized `dict` as `dict[str, Any]` in `_parse_finding`, `validate_to_json` return tuple, and the `payloads` list. Added imports of `Iterator` from `collections.abc` and `Any` from `typing`. CI gains an `Install dev tools` + `Type-check validators` step using `mypy==2.1.0` (pinned). CONTRIBUTING.md gains a local-venv recipe and an explanation that dev tools do not ship with the skill. CHANGELOG records the addition.
+
+**Verification**
+- `mypy --strict scripts/validate_skill.py work-queue/scripts/validate_queue.py`: passed (0 errors)
+- `python3 -m unittest discover -s tests`: 42 passed
+
+**Outcome**
+Changed: `work-queue/scripts/validate_queue.py` (imports + annotations), `.github/workflows/ci.yml` (new steps), `CONTRIBUTING.md`, `CHANGELOG.md`.
 
 ### WQ-036 Surface the transient-IDs rule in SKILL.md
 

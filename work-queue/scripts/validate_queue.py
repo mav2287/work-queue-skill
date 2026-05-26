@@ -7,9 +7,11 @@ import argparse
 import json
 import re
 import sys
-from dataclasses import dataclass
+from collections.abc import Iterator
+from dataclasses import dataclass, field
 from datetime import date
 from pathlib import Path
+from typing import Any
 
 
 EARLIEST_SANE_DATE = date(2020, 1, 1)
@@ -71,7 +73,7 @@ def is_fence(line: str) -> bool:
     return bool(FENCE_RE.match(line))
 
 
-def iter_unfenced(lines: list[str]):
+def iter_unfenced(lines: list[str]) -> Iterator[str]:
     in_fence = False
     for line in lines:
         if is_fence(line):
@@ -570,7 +572,9 @@ _FINDING_LINE_ONLY_RE = re.compile(
 )
 
 
-def _parse_finding(severity: str, message: str, file_path: Path) -> dict:
+def _parse_finding(
+    severity: str, message: str, file_path: Path
+) -> dict[str, Any]:
     match = _FINDING_WITH_ID_RE.match(message)
     if match:
         return {
@@ -691,7 +695,7 @@ def validate_to_json(
     allow_done: bool,
     strict_sections: bool,
     strict: bool = False,
-) -> tuple[dict, int]:
+) -> tuple[dict[str, Any], int]:
     errors, warnings, item_count = collect(
         path, allow_done, strict_sections, strict=strict
     )
@@ -781,7 +785,7 @@ def main() -> int:
         return worst
 
     if args.json:
-        payloads: list[dict] = []
+        payloads: list[dict[str, Any]] = []
         worst = 0
         for queue_file in args.queue_files:
             if not queue_file.exists():
