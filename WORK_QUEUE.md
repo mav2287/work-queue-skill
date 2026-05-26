@@ -20,25 +20,6 @@ _None._
 
 ## Ready
 
-### WQ-011 Accept multiple files or glob in the queue validator
-
-- **Type**: feature
-- **Priority**: P1
-- **Created**: 2026-05-26
-- **Area**: validator
-
-**Problem / Want**
-`validate_queue.py` takes exactly one positional argument. Repos with multiple queues (per-area, per-team) cannot lint them in one CI step without a shell loop.
-
-**Acceptance**
-- [ ] Validator accepts one or more queue file paths.
-- [ ] Validator accepts a `--glob` pattern or treats shell-expanded globs naturally.
-- [ ] Exit code is non-zero if any file fails; per-file summaries are printed.
-- [ ] Regression tests cover multi-file pass and mixed pass/fail invocations.
-
-**Notes**
-Argparse setup at `work-queue/scripts/validate_queue.py:355-368`.
-
 ### WQ-012 Add a `--fix` mode for safe canonicalization
 
 - **Type**: feature
@@ -541,6 +522,32 @@ _None._
 _None._
 
 ## Done
+
+### WQ-011 Accept multiple files in the queue validator
+
+- **Type**: feature
+- **Priority**: P1
+- **Created**: 2026-05-26
+- **Area**: validator
+
+**Problem / Want**
+`validate_queue.py` took exactly one positional argument; multi-queue repos needed a shell loop.
+
+**Acceptance**
+- [x] Validator accepts one or more queue file paths.
+- [x] Validator accepts a `--glob` pattern or treats shell-expanded globs naturally.
+- [x] Exit code is non-zero if any file fails; per-file summaries are printed.
+- [x] Regression tests cover multi-file pass and mixed pass/fail invocations.
+
+**Notes**
+Changed the positional from `queue_file` to `queue_files` with `nargs="+"`. Shell-expanded globs (`WORK_QUEUE*.md`) work naturally. Per-file `::: <path>` header is emitted when more than one file is supplied. Exit code is the worst result across all files (validate() return values are 0/1/2). Two regression tests: all-good and mixed-good-bad.
+
+**Verification**
+- `python3 -m unittest discover -s tests`: 19 passed
+- `python3 work-queue/scripts/validate_queue.py --strict-sections work-queue/examples/sample-queue.md work-queue/templates/WORK_QUEUE.md WORK_QUEUE.md`: all passed with per-file output
+
+**Outcome**
+Changed: `work-queue/scripts/validate_queue.py` (main()), `tests/test_validate_queue.py`.
 
 ### WQ-010 Resolved: openai.yaml check stays a presence smoke check
 

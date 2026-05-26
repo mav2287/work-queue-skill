@@ -191,6 +191,46 @@ Done without a Verification heading.
         self.assertEqual(code, 0)
         self.assertIn("duplicate title", stderr.getvalue())
 
+    def test_main_accepts_multiple_files_and_fails_if_any_fail(self):
+        good = queue_with_ready(item("WQ-001"))
+        bad = queue_with_ready(
+            item("WQ-001").replace("**Priority**: P1", "**Priority**: P9")
+        )
+        with tempfile.TemporaryDirectory() as tmp:
+            good_path = Path(tmp) / "good.md"
+            bad_path = Path(tmp) / "bad.md"
+            good_path.write_text(good, encoding="utf-8")
+            bad_path.write_text(bad, encoding="utf-8")
+
+            argv = sys.argv
+            sys.argv = ["validate_queue.py", str(good_path), str(bad_path)]
+            try:
+                with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(
+                    io.StringIO()
+                ):
+                    code = validate_queue.main()
+            finally:
+                sys.argv = argv
+        self.assertEqual(code, 1)
+
+    def test_main_accepts_multiple_good_files(self):
+        good = queue_with_ready(item("WQ-001"))
+        with tempfile.TemporaryDirectory() as tmp:
+            a = Path(tmp) / "a.md"
+            b = Path(tmp) / "b.md"
+            a.write_text(good, encoding="utf-8")
+            b.write_text(good, encoding="utf-8")
+            argv = sys.argv
+            sys.argv = ["validate_queue.py", str(a), str(b)]
+            try:
+                with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(
+                    io.StringIO()
+                ):
+                    code = validate_queue.main()
+            finally:
+                sys.argv = argv
+        self.assertEqual(code, 0)
+
     def test_blocked_on_unknown_id_fails(self):
         blocked_body = """### WQ-002 Investigate flaky test
 

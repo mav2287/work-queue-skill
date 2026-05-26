@@ -464,7 +464,12 @@ def validate(
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("queue_file", type=Path)
+    parser.add_argument(
+        "queue_files",
+        type=Path,
+        nargs="+",
+        help="One or more queue files. Shell globs (WORK_QUEUE*.md) are accepted.",
+    )
     parser.add_argument(
         "--allow-done",
         action="store_true",
@@ -482,16 +487,23 @@ def main() -> int:
     )
     args = parser.parse_args()
 
-    if not args.queue_file.exists():
-        print(f"ERROR: file not found: {args.queue_file}", file=sys.stderr)
-        return 2
-
-    return validate(
-        args.queue_file,
-        args.allow_done,
-        args.strict_sections,
-        strict=args.strict,
-    )
+    worst = 0
+    multi = len(args.queue_files) > 1
+    for queue_file in args.queue_files:
+        if multi:
+            print(f"::: {queue_file}", file=sys.stderr)
+        if not queue_file.exists():
+            print(f"ERROR: file not found: {queue_file}", file=sys.stderr)
+            worst = max(worst, 2)
+            continue
+        result = validate(
+            queue_file,
+            args.allow_done,
+            args.strict_sections,
+            strict=args.strict,
+        )
+        worst = max(worst, result)
+    return worst
 
 
 if __name__ == "__main__":
