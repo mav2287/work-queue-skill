@@ -20,24 +20,6 @@ _None._
 
 ## Ready
 
-### WQ-013 Add `--json` output for editor and agent integration
-
-- **Type**: feature
-- **Priority**: P1
-- **Created**: 2026-05-26
-- **Area**: validator
-
-**Problem / Want**
-Agents and editors that consume validator output today must parse `WARN:` / `ERROR:` text lines. A structured output makes integration robust.
-
-**Acceptance**
-- [ ] `--json` prints a single JSON document with errors and warnings, each carrying file, line, item id, severity, and message fields.
-- [ ] Human output remains the default.
-- [ ] Regression test asserts the JSON schema is stable.
-
-**Notes**
-Use only stdlib `json`.
-
 ### WQ-014 Document validator exit codes and CLI surface
 
 - **Type**: docs
@@ -503,6 +485,31 @@ _None._
 _None._
 
 ## Done
+
+### WQ-013 Add --json output for editor and agent integration
+
+- **Type**: feature
+- **Priority**: P1
+- **Created**: 2026-05-26
+- **Area**: validator
+
+**Problem / Want**
+Editors and agents had to parse `WARN:` / `ERROR:` text lines to consume validator output.
+
+**Acceptance**
+- [x] `--json` prints a single JSON document with errors and warnings, each carrying file, line, item id, severity, and message fields.
+- [x] Human output remains the default.
+- [x] Regression test asserts the JSON schema is stable.
+
+**Notes**
+Extracted `collect()` from `validate()` so both human-readable and JSON paths share the same logic. Added `validate_to_json()` that parses each finding string into `{file, severity, item_id, line, message}` using two anchored regexes (one for messages with `WQ-NNN line N:`, one for `line N:` only, fallback to id/line=null for top-level messages like "no queue items found"). `--json` flag emits one top-level `{"files": [...]}` document covering all input files. Two tests: programmatic schema check and CLI smoke test.
+
+**Verification**
+- `python3 -m unittest discover -s tests`: 25 passed
+- `python3 work-queue/scripts/validate_queue.py --strict-sections --json WORK_QUEUE.md | python3 -m json.tool`: valid JSON
+
+**Outcome**
+Changed: `work-queue/scripts/validate_queue.py` (new `collect`, `validate_to_json`, `--json` flag), `tests/test_validate_queue.py` (two tests).
 
 ### WQ-012 Add a `--fix` mode for safe canonicalization
 

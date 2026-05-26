@@ -191,6 +191,49 @@ Done without a Verification heading.
         self.assertEqual(code, 0)
         self.assertIn("duplicate title", stderr.getvalue())
 
+    def test_json_output_schema(self):
+        invalid_item = item("WQ-001").replace(
+            "**Priority**: P1", "**Priority**: P9"
+        )
+        text = queue_with_ready(invalid_item)
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "WORK_QUEUE.md"
+            path.write_text(text, encoding="utf-8")
+            payload, code = validate_queue.validate_to_json(
+                path, allow_done=False, strict_sections=True
+            )
+        self.assertEqual(code, 1)
+        self.assertEqual(payload["file"], str(path))
+        self.assertEqual(payload["error_count"], 1)
+        self.assertEqual(payload["item_count"], 1)
+        self.assertEqual(len(payload["findings"]), 1)
+        finding = payload["findings"][0]
+        self.assertEqual(finding["severity"], "error")
+        self.assertEqual(finding["item_id"], "WQ-001")
+        self.assertIsInstance(finding["line"], int)
+        self.assertIn("Priority", finding["message"])
+
+    def test_json_cli_emits_one_document(self):
+        text = queue_with_ready(item("WQ-001"))
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "WORK_QUEUE.md"
+            path.write_text(text, encoding="utf-8")
+            argv = sys.argv
+            sys.argv = ["validate_queue.py", "--strict-sections", "--json", str(path)]
+            stdout = io.StringIO()
+            try:
+                with contextlib.redirect_stdout(stdout), contextlib.redirect_stderr(
+                    io.StringIO()
+                ):
+                    code = validate_queue.main()
+            finally:
+                sys.argv = argv
+        self.assertEqual(code, 0)
+        import json as _json
+        doc = _json.loads(stdout.getvalue())
+        self.assertEqual(len(doc["files"]), 1)
+        self.assertEqual(doc["files"][0]["item_count"], 1)
+
     def test_fix_sorts_ready_by_priority_then_id(self):
         text = queue_with_ready(
             item("WQ-002", "P2") + "\n" + item("WQ-001", "P1") + "\n" + item("WQ-003", "P0")

@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 import re
 import sys
 from dataclasses import dataclass
@@ -523,12 +524,48 @@ def fix_queue(text: str) -> str:
     return "\n".join(out) + "\n"
 
 
-def validate(
+_FINDING_WITH_ID_RE = re.compile(
+    r"^(?P<id>[A-Z][A-Z0-9]*-\d{3,})\s+line\s+(?P<line>\d+):\s*(?P<message>.*)$"
+)
+_FINDING_LINE_ONLY_RE = re.compile(
+    r"^line\s+(?P<line>\d+):\s*(?P<message>.*)$"
+)
+
+
+def _parse_finding(severity: str, message: str, file_path: Path) -> dict:
+    match = _FINDING_WITH_ID_RE.match(message)
+    if match:
+        return {
+            "file": str(file_path),
+            "severity": severity,
+            "item_id": match.group("id"),
+            "line": int(match.group("line")),
+            "message": match.group("message").strip(),
+        }
+    match = _FINDING_LINE_ONLY_RE.match(message)
+    if match:
+        return {
+            "file": str(file_path),
+            "severity": severity,
+            "item_id": None,
+            "line": int(match.group("line")),
+            "message": match.group("message").strip(),
+        }
+    return {
+        "file": str(file_path),
+        "severity": severity,
+        "item_id": None,
+        "line": None,
+        "message": message,
+    }
+
+
+def collect(
     path: Path,
     allow_done: bool,
     strict_sections: bool,
     strict: bool = False,
-) -> int:
+) -> tuple[list[str], list[str], int]:
     if strict:
         strict_sections = True
     text = path.read_text(encoding="utf-8")
@@ -570,6 +607,19 @@ def validate(
     if not items:
         warnings.append("no queue items found")
 
+    return errors, warnings, len(items)
+
+
+def validate(
+    path: Path,
+    allow_done: bool,
+    strict_sections: bool,
+    strict: bool = False,
+) -> int:
+    errors, warnings, item_count = collect(
+        path, allow_done, strict_sections, strict=strict
+    )
+
     for message in warnings:
         print(f"WARN: {message}", file=sys.stderr)
     for message in errors:
@@ -579,8 +629,30 @@ def validate(
         print(f"Queue validation failed: {len(errors)} error(s), {len(warnings)} warning(s)")
         return 1
 
-    print(f"Queue validation passed: {len(items)} item(s), {len(warnings)} warning(s)")
+    print(f"Queue validation passed: {item_count} item(s), {len(warnings)} warning(s)")
     return 0
+
+
+def validate_to_json(
+    path: Path,
+    allow_done: bool,
+    strict_sections: bool,
+    strict: bool = False,
+) -> tuple[dict, int]:
+    errors, warnings, item_count = collect(
+        path, allow_done, strict_sections, strict=strict
+    )
+    findings = [_parse_finding("error", m, path) for m in errors] + [
+        _parse_finding("warning", m, path) for m in warnings
+    ]
+    payload = {
+        "file": str(path),
+        "item_count": item_count,
+        "error_count": len(errors),
+        "warning_count": len(warnings),
+        "findings": findings,
+    }
+    return payload, 1 if errors else 0
 
 
 def main() -> int:
@@ -612,6 +684,11 @@ def main() -> int:
         help="Canonicalize section order, sort Ready by priority/date/id, and normalize trailing whitespace. Rewrites the file in place.",
     )
     parser.add_argument(
+        "--json",
+        action="store_true",
+        help="Emit findings as one JSON document on stdout instead of human-readable lines.",
+    )
+    parser.add_argument(
         "--check",
         action="store_true",
         help="With --fix, exit non-zero if the file would change instead of writing.",
@@ -636,6 +713,41 @@ def main() -> int:
                 continue
             queue_file.write_text(fixed, encoding="utf-8")
             print(f"{queue_file}: rewrote")
+        return worst
+
+    if args.json:
+        payloads: list[dict] = []
+        worst = 0
+        for queue_file in args.queue_files:
+            if not queue_file.exists():
+                payloads.append(
+                    {
+                        "file": str(queue_file),
+                        "item_count": 0,
+                        "error_count": 1,
+                        "warning_count": 0,
+                        "findings": [
+                            {
+                                "file": str(queue_file),
+                                "severity": "error",
+                                "item_id": None,
+                                "line": None,
+                                "message": f"file not found: {queue_file}",
+                            }
+                        ],
+                    }
+                )
+                worst = max(worst, 2)
+                continue
+            payload, code = validate_to_json(
+                queue_file,
+                args.allow_done,
+                args.strict_sections,
+                strict=args.strict,
+            )
+            payloads.append(payload)
+            worst = max(worst, code)
+        print(json.dumps({"files": payloads}, indent=2))
         return worst
 
     worst = 0
