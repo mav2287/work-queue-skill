@@ -20,24 +20,6 @@ _None._
 
 ## Ready
 
-### WQ-007 Warn on duplicate item titles
-
-- **Type**: feature
-- **Priority**: P1
-- **Created**: 2026-05-26
-- **Area**: validator
-
-**Problem / Want**
-Duplicate IDs are caught, but duplicate titles are not. Two reports of the same bug landing in Inbox is the most common duplicate symptom and the validator should flag it.
-
-**Acceptance**
-- [ ] Validator emits a warning when two items share a normalized title (case-insensitive, whitespace-collapsed).
-- [ ] Warning includes both IDs and line numbers.
-- [ ] Regression test covers the duplicate-title case.
-
-**Notes**
-Normalization should be conservative to avoid false positives on common verbs like "Fix login".
-
 ### WQ-008 Range-check Created dates
 
 - **Type**: feature
@@ -614,6 +596,31 @@ _None._
 _None._
 
 ## Done
+
+### WQ-007 Warn on duplicate item titles
+
+- **Type**: feature
+- **Priority**: P1
+- **Created**: 2026-05-26
+- **Area**: validator
+
+**Problem / Want**
+Duplicate IDs were caught, duplicate titles were not — the most common duplicate-report symptom.
+
+**Acceptance**
+- [x] Validator emits a warning when two items share a normalized title (case-insensitive, whitespace-collapsed).
+- [x] Warning includes both IDs and line numbers.
+- [x] Regression test covers the duplicate-title case.
+
+**Notes**
+Added `normalize_title` (lowercase, whitespace-collapsed) and `validate_duplicate_titles`. Done/Cancelled items and placeholder titles are excluded from the comparison so retired duplicates do not generate noise.
+
+**Verification**
+- `python3 -m unittest discover -s tests`: 14 passed
+- `python3 work-queue/scripts/validate_queue.py --strict-sections WORK_QUEUE.md`: passed
+
+**Outcome**
+Changed: `work-queue/scripts/validate_queue.py`, `tests/test_validate_queue.py`.
 
 ### WQ-006 Validate `Blocked on: WQ-NNN` references resolve
 

@@ -106,6 +106,21 @@ class ValidateQueueTests(unittest.TestCase):
             self.validate_text(text, allow_done=False, strict_sections=True), 1
         )
 
+    def test_duplicate_titles_warn(self):
+        text = queue_with_ready(item("WQ-001") + "\n" + item("WQ-002"))
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "WORK_QUEUE.md"
+            path.write_text(text, encoding="utf-8")
+            stderr = io.StringIO()
+            with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(
+                stderr
+            ):
+                code = validate_queue.validate(
+                    path, allow_done=False, strict_sections=True
+                )
+        self.assertEqual(code, 0)
+        self.assertIn("duplicate title", stderr.getvalue())
+
     def test_blocked_on_unknown_id_fails(self):
         blocked_body = """### WQ-002 Investigate flaky test
 

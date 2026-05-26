@@ -318,6 +318,29 @@ def validate_ready_order(items: list[Item]) -> tuple[list[str], list[str]]:
     return errors, warnings
 
 
+def normalize_title(title: str) -> str:
+    return " ".join(title.lower().split())
+
+
+def validate_duplicate_titles(items: list[Item]) -> tuple[list[str], list[str]]:
+    warnings: list[str] = []
+    seen: dict[str, Item] = {}
+    for item in items:
+        if not item.title or item.title.startswith("<"):
+            continue
+        if item.section in {"Done", "Cancelled"}:
+            continue
+        key = normalize_title(item.title)
+        existing = seen.get(key)
+        if existing is None:
+            seen[key] = item
+            continue
+        warnings.append(
+            f"{item.id} line {item.line}: duplicate title of {existing.id} (line {existing.line}); possible duplicate report"
+        )
+    return [], warnings
+
+
 def validate_blocked_references(
     items: list[Item],
 ) -> tuple[list[str], list[str]]:
@@ -398,6 +421,10 @@ def validate(
     ref_errors, ref_warnings = validate_blocked_references(items)
     errors.extend(ref_errors)
     warnings.extend(ref_warnings)
+
+    dup_errors, dup_warnings = validate_duplicate_titles(items)
+    errors.extend(dup_errors)
+    warnings.extend(dup_warnings)
 
     if not items:
         warnings.append("no queue items found")
