@@ -20,24 +20,6 @@ _None._
 
 ## Ready
 
-### WQ-033 Decide whether to publish to discoverability channels
-
-- **Type**: investigation
-- **Priority**: P2
-- **Created**: 2026-05-26
-- **Area**: release
-
-**Problem / Want**
-Competing skills are discovered through `mcpmarket.com`, `awesome-claude-code`, and references in `anthropics/skills`. This skill is unlisted everywhere. The investigation should produce a decision on which channels to target.
-
-**Acceptance**
-- [ ] List candidate channels with submission process and audience for each.
-- [ ] Record a decision on which channels to submit to and which to skip, with a one-line rationale per choice.
-- [ ] File Ready follow-up items for the submissions that are in scope.
-
-**Notes**
-Independent of code work; can be done in parallel with anything else.
-
 ### WQ-034 Replace the absolute-path placeholder in SKILL.md Validation snippet
 
 - **Type**: docs
@@ -46,7 +28,7 @@ Independent of code work; can be done in parallel with anything else.
 - **Area**: skill-content
 
 **Problem / Want**
-`SKILL.md` validation snippet reads `python3 /absolute/path/to/installed/work-queue/scripts/validate_queue.py`. This is technically correct but ugly, and agents will copy it literally.
+`SKILL.md` validation snippet read `python3 /absolute/path/to/installed/work-queue/scripts/validate_queue.py`. This was technically correct but ugly, and agents would copy it literally.
 
 **Acceptance**
 - [ ] Snippet shows the two real install paths (`~/.claude/skills/work-queue/...` and `.claude/skills/work-queue/...`) and tells the agent to pick whichever matches the current installation.
@@ -138,6 +120,73 @@ LICENSE year and holder were not audited. A wrong year is harmless; an unverifie
 **Notes**
 File: `LICENSE`.
 
+### WQ-040 Submit to awesome-claude-code
+
+- **Type**: chore
+- **Priority**: P3
+- **Created**: 2026-05-26
+- **Area**: release
+
+**Problem / Want**
+The skill is unlisted on community curated lists. Filed as a follow-up from WQ-033.
+
+**Acceptance**
+- [ ] Open a PR against `rohitg00/awesome-claude-code-toolkit` (or current successor) adding this repo URL and a one-line description to the relevant section.
+- [ ] Link the resulting PR back in this item before closing.
+
+**Notes**
+See `docs/distribution.md` for the rationale.
+
+### WQ-041 Submit to mcpmarket.com and agensi.io
+
+- **Type**: chore
+- **Priority**: P3
+- **Created**: 2026-05-26
+- **Area**: release
+
+**Problem / Want**
+Catalog listings are the broadest discoverability channel; filed as a follow-up from WQ-033.
+
+**Acceptance**
+- [ ] Submit the skill to `mcpmarket.com` via its web form, linking to the v0.1.0 release zip.
+- [ ] Submit the skill to `agensi.io` (the `skills.sh` catalog) via its web form.
+- [ ] Record both listing URLs in `docs/distribution.md`.
+
+**Notes**
+The release CI (WQ-027) produces a versioned zip per tag that the catalogs can link to directly.
+
+### WQ-042 Set GitHub repo topics, description, and social preview
+
+- **Type**: chore
+- **Priority**: P3
+- **Created**: 2026-05-26
+- **Area**: release
+
+**Problem / Want**
+Organic GitHub discovery is free signal; filed as a follow-up from WQ-033.
+
+**Acceptance**
+- [ ] Add topics: `claude-code`, `codex`, `agent-skill`, `markdown-task-queue` (plus any obvious adjacent topics).
+- [ ] Set a one-line repo description matching the README opener.
+- [ ] Upload a social-preview image (1280x640) under repo Settings → Social preview.
+
+**Notes**
+These are GitHub repo Settings actions, not code changes.
+
+- **Type**: chore
+- **Priority**: P3
+- **Created**: 2026-05-26
+- **Area**: packaging
+
+**Problem / Want**
+LICENSE year and holder were not audited. A wrong year is harmless; an unverified copyright line is a small papercut.
+
+**Acceptance**
+- [ ] LICENSE shows the correct year (2026 today) and the intended holder name.
+
+**Notes**
+File: `LICENSE`.
+
 ## Needs refinement
 
 _None._
@@ -147,6 +196,30 @@ _None._
 _None._
 
 ## Done
+
+### WQ-033 Distribution channel decision recorded
+
+- **Type**: investigation
+- **Priority**: P2
+- **Created**: 2026-05-26
+- **Area**: release
+
+**Problem / Want**
+The skill was unlisted on every discoverability channel and there was no record of which channels to target or skip.
+
+**Acceptance**
+- [x] List candidate channels with submission process and audience for each.
+- [x] Record a decision on which channels to submit to and which to skip, with a one-line rationale per choice.
+- [x] File Ready follow-up items for the submissions that are in scope.
+
+**Notes**
+Created `docs/distribution.md` documenting five candidate channels with process, audience, cost, and a decision per channel. In scope: `awesome-claude-code` lists, `mcpmarket.com` + `agensi.io` catalogs, GitHub repo metadata. Deferred: `openai/skills` and `anthropics/skills` (no documented community submission flow). Filed three follow-up items (WQ-040, WQ-041, WQ-042) at P3 covering the in-scope work. Each follow-up names the submission action and the evidence to record.
+
+**Verification**
+- `python3 work-queue/scripts/validate_queue.py --strict-sections WORK_QUEUE.md`: passed (the three new follow-up items validate as Ready).
+
+**Outcome**
+Added: `docs/distribution.md`, queue items WQ-040, WQ-041, WQ-042 (Ready).
 
 ### WQ-032 Recommend the project install in the README
 
