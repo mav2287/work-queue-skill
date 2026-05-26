@@ -20,24 +20,6 @@ _None._
 
 ## Ready
 
-### WQ-002 Correct or implement the `/work-queue` slash-command claim
-
-- **Type**: bug
-- **Priority**: P0
-- **Created**: 2026-05-26
-- **Area**: docs
-
-**Problem / Want**
-`README.md` tells users they can invoke the skill with `/work-queue`, but no `commands/work-queue.md` ships in the package. Claude Code skills are invoked via the `Skill` tool or the `$work-queue` prefix, not as a slash command unless one is registered. Users will type `/work-queue`, see nothing, and assume the skill is broken.
-
-**Acceptance**
-- [ ] Either ship a real slash command under `work-queue/commands/` that triggers the skill, or update the README to remove the `/work-queue` claim and describe the actual invocation paths (`$work-queue` mention, automatic skill discovery).
-- [ ] README documents the supported invocation paths for Claude Code and Codex separately.
-- [ ] If a slash command is added, a smoke test or manual verification step confirms it loads.
-
-**Notes**
-README claim is at `README.md:39-43`. Skill is auto-discovered via SKILL.md frontmatter; slash commands are a separate file/directory convention.
-
 ### WQ-003 Fix template item ID so it parses
 
 - **Type**: bug
@@ -706,6 +688,32 @@ _None._
 _None._
 
 ## Done
+
+### WQ-002 Correct the `/work-queue` slash-command claim
+
+- **Type**: bug
+- **Priority**: P0
+- **Created**: 2026-05-26
+- **Area**: docs
+
+**Problem / Want**
+`README.md` told users they could invoke the skill with `/work-queue`, but no slash command shipped in the package. Users would type `/work-queue`, see nothing, and assume the skill was broken.
+
+**Acceptance**
+- [x] Either ship a real slash command under `work-queue/commands/` that triggers the skill, or update the README to remove the `/work-queue` claim and describe the actual invocation paths.
+- [x] README documents the supported invocation paths.
+- [x] If a slash command is added, a smoke test or manual verification step confirms it loads. _(N/A: no slash command added in this change.)_
+
+**Notes**
+Chose the README correction over shipping a slash command because the in-skill slash-command loading path is not portably specified across Claude Code and Codex today; a real slash command can be added as a separate item once the loader path is verified.
+
+**Verification**
+- `python3 work-queue/scripts/validate_queue.py --strict-sections WORK_QUEUE.md`: passed
+- `python3 scripts/validate_skill.py work-queue`: passed
+- Manual: re-read README to confirm no remaining `/work-queue` slash-command claim.
+
+**Outcome**
+Changed: `README.md` — replaced the slash-command snippet with an `Invoking the Skill` section describing the `$work-queue` mention and automatic discovery, plus a first-run prompt example.
 
 ### WQ-001 Stop committing OS and IDE metadata
 

@@ -34,15 +34,26 @@ mkdir -p "${CODEX_HOME:-$HOME/.codex}/skills/work-queue"
 rsync -a --exclude='.DS_Store' work-queue/ "${CODEX_HOME:-$HOME/.codex}/skills/work-queue/"
 ```
 
-Claude Code can invoke it with:
+## Invoking the Skill
+
+After installation the skill is auto-discovered by the agent from its
+`SKILL.md` frontmatter. There is no separate `/work-queue` slash command
+unless the host project registers one — invoke the skill by either:
+
+- mentioning it in a prompt with the `$` prefix, for example
+  `use $work-queue to triage the inbox`, or
+- letting the agent select it automatically when a request matches the
+  description in `work-queue/SKILL.md`.
+
+A first-run prompt that exercises the skill end-to-end:
 
 ```text
-/work-queue
+Use $work-queue to read WORK_QUEUE.md, validate it, and start draining
+Ready items until the queue is empty or blocked.
 ```
 
-Claude Code or Codex can also be asked to use `$work-queue`.
-
-The skill itself is the `work-queue/` directory. The root of this repository is packaging, CI, and documentation for publishing.
+The skill itself is the `work-queue/` directory. The root of this
+repository is packaging, CI, and documentation for publishing.
 
 ## Queue File
 
