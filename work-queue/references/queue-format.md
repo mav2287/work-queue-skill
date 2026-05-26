@@ -53,6 +53,20 @@ the future or earlier than `2020-01-01` because both are usually typos.
 Adjust the lower bound by editing `EARLIEST_SANE_DATE` in
 `work-queue/scripts/validate_queue.py` for legacy projects.
 
+## Local checks before asking (optional)
+
+A Ready item may include a `**Local checks before asking**` subsection
+inside Notes that names files, searches, docs, logs, or other queue
+items the agent inspected before bringing a question back to the
+human. It is the durable form of the question gate described in
+`references/intake.md`.
+
+The validator treats it as a recognized body heading so it terminates
+the Acceptance block cleanly. The validator does not require it to be
+present, but it warns if a Ready item still contains the literal text
+"Example only" — that is the template placeholder and should be
+replaced with real evidence.
+
 ## Verification and Outcome on Done items
 
 When an item moves to `Done`, the body should grow two new

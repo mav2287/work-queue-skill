@@ -14,8 +14,10 @@ Users with zero records see a persistent loading state. They should see the norm
 - [ ] The failure path is covered by a test or documented manual verification using a zero-record account.
 
 **Notes**
-Local checks before asking:
-- Example only: replace with actual target-project files, searches, docs, logs, or queue items inspected before asking the user.
+**Local checks before asking**
+- Searched `apps/web/records/` for the loader component and confirmed the empty-state branch is missing.
+- Read existing test `apps/web/records/list.test.tsx`; it does not cover the zero-record path.
+- Checked WORK_QUEUE.md for prior related items; no duplicates.
 
 Repro:
 - Sign in as a user with zero records and open the records list.

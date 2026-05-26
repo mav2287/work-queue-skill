@@ -20,24 +20,6 @@ _None._
 
 ## Ready
 
-### WQ-021 Reconcile the `Local checks before asking` field across template, examples, and validator
-
-- **Type**: bug
-- **Priority**: P1
-- **Created**: 2026-05-26
-- **Area**: skill-content
-
-**Problem / Want**
-`templates/item.md` introduces a `Local checks before asking` line under Notes. The example fixtures use the same idiom. The validator does not check for it, and `references/queue-format.md` does not list it as a documented body heading. The pattern is half-implemented.
-
-**Acceptance**
-- [ ] Decide whether the field is required, optional, or removed.
-- [ ] Whatever the decision, template, examples, references, and validator all reflect it consistently.
-- [ ] If required, validator enforces presence on Ready items and warns when the field still contains the example placeholder text.
-
-**Notes**
-Examples: `work-queue/examples/ready-bug.md:17-19`, `work-queue/examples/blocked-investigation.md:18-19`. Template: `work-queue/templates/item.md:18-19`.
-
 ### WQ-022 Plan and document a hybrid storage path for large queues
 
 - **Type**: docs
@@ -361,6 +343,32 @@ _None._
 _None._
 
 ## Done
+
+### WQ-021 Reconcile the Local checks field
+
+- **Type**: bug
+- **Priority**: P1
+- **Created**: 2026-05-26
+- **Area**: skill-content
+
+**Problem / Want**
+`Local checks before asking` appeared in the template and examples but was undocumented in references and unrecognized by the validator. Examples shipped with the literal text "Example only: replace..." as their content, which was a half-finished placeholder.
+
+**Acceptance**
+- [x] Decide whether the field is required, optional, or removed.
+- [x] Whatever the decision, template, examples, references, and validator all reflect it consistently.
+- [x] If required, validator enforces presence on Ready items and warns when the field still contains the example placeholder text.
+
+**Notes**
+Decision: keep it optional but make it a first-class body heading. Added `Local checks before asking` to `BODY_HEADINGS` so it terminates Acceptance cleanly when present. Added a section to `references/queue-format.md` explaining its purpose (the durable form of the question gate). Validator warns when a Ready item still contains "Example only" since that is the template placeholder. Rewrote both example fixtures to show realistic local-check evidence instead of the placeholder text. Template now tells the user to "never write Example only" inline.
+
+**Verification**
+- `python3 -m unittest discover -s tests`: 40 passed
+- `python3 work-queue/scripts/validate_queue.py --strict-sections work-queue/examples/*.md`: passed
+- `python3 work-queue/scripts/validate_queue.py --strict-sections WORK_QUEUE.md`: passed
+
+**Outcome**
+Changed: `work-queue/scripts/validate_queue.py` (BODY_HEADINGS + Example-only check), `work-queue/references/queue-format.md`, `work-queue/templates/item.md`, `work-queue/examples/ready-bug.md`, `work-queue/examples/blocked-investigation.md`.
 
 ### WQ-020 Outcome convention for Done items
 

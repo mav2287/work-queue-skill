@@ -31,6 +31,7 @@ BODY_HEADINGS = {
     "Problem / Want",
     "Acceptance",
     "Notes",
+    "Local checks before asking",
     "Verification",
     "Outcome",
     "Questions",
@@ -271,6 +272,10 @@ def validate_item(
         if PLACEHOLDER_RE.search(body):
             warnings.append(
                 f"{prefix}: Ready item may still contain placeholders or uncertainty"
+            )
+        if "Example only" in body or "example only" in body:
+            warnings.append(
+                f"{prefix}: Ready item still contains 'Example only' placeholder text"
             )
 
     return errors, warnings

@@ -15,8 +15,10 @@ Imported records can be created automatically, but the desired approval policy i
 - [ ] If approval is required, open Ready implementation items for UI, permissions, tests, and audit logging.
 
 **Notes**
-Local checks before asking:
-- Example only: replace with actual target-project searches, files, docs, or logs inspected before asking the user.
+**Local checks before asking**
+- Searched the codebase for `manager_approval` and `approver_role`; no existing pattern.
+- Read `docs/imports/README.md`; it does not mention approvals.
+- Asked WORK_QUEUE.md for prior import-policy items; none found.
 
 **Questions**
 - Which imported records require approval, if any?

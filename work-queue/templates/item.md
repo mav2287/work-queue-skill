@@ -22,7 +22,8 @@ listing the commands run and their results, and an **Outcome**
 subsection naming changed file paths plus a commit or PR reference. -->
 
 **Local checks before asking**
-- <actual files, searches, docs, logs, or queue items inspected in the target project; do not invent>
+- <list actual files, searches, docs, logs, or queue items inspected; never write "Example only">
+- <each bullet should name a concrete artifact in the target project>
 
 <repro steps, links, file paths, commands, decisions, dependencies, and verification results>
 
