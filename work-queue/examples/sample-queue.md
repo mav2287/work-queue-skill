@@ -2,6 +2,14 @@
 
 Single source of truth for active work.
 
+## Queue Rules
+
+- Status is the section the item lives in. Move the whole item; do not duplicate it.
+- `Ready` means an agent can execute the item end to end without returning to the requester for basic scope.
+- `Done` and `Cancelled` are transient. Delete them after a durable record exists.
+- Default priority order: `P0`, `P1`, `P2`, `P3`.
+- Default type values: `bug`, `feature`, `chore`, `docs`, `refactor`, `investigation`.
+
 ## In progress
 
 _None._

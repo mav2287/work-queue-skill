@@ -20,23 +20,6 @@ _None._
 
 ## Ready
 
-### WQ-035 Decide whether to include `## Queue Rules` in the starter template
-
-- **Type**: chore
-- **Priority**: P3
-- **Created**: 2026-05-26
-- **Area**: templates
-
-**Problem / Want**
-`templates/WORK_QUEUE.md` omits the `## Queue Rules` section while the validator's `NON_STATUS_SECTIONS` set explicitly accepts it. The bundled `examples/sample-queue.md` also omits it. The half-supported state is confusing.
-
-**Acceptance**
-- [ ] Decide: either add `## Queue Rules` to the starter template (and document it as recommended) or remove the `NON_STATUS_SECTIONS` allowance and update references.
-- [ ] Template, example, validator, and references all agree.
-
-**Notes**
-Validator constant at `work-queue/scripts/validate_queue.py:25`.
-
 ### WQ-036 Lift "omit transient queue IDs from durable commit messages" into SKILL.md
 
 - **Type**: docs
@@ -179,6 +162,30 @@ _None._
 _None._
 
 ## Done
+
+### WQ-035 Queue Rules in the starter and bundled example
+
+- **Type**: chore
+- **Priority**: P3
+- **Created**: 2026-05-26
+- **Area**: templates
+
+**Problem / Want**
+`templates/WORK_QUEUE.md` already carried `## Queue Rules` (lifted earlier in the drain); `examples/sample-queue.md` did not. The validator's `NON_STATUS_SECTIONS` accepted the section either way, leaving inconsistent fixtures.
+
+**Acceptance**
+- [x] Decide: either add `## Queue Rules` to the starter template (and document it as recommended) or remove the `NON_STATUS_SECTIONS` allowance and update references.
+- [x] Template, example, validator, and references all agree.
+
+**Notes**
+Decided to keep `## Queue Rules` as a recommended (non-required) section and align fixtures around it. The starter template already included it; the bundled sample example was the inconsistent one and now also includes it. Validator behavior is unchanged: `NON_STATUS_SECTIONS = {"Queue Rules"}` continues to recognize the section without making it mandatory.
+
+**Verification**
+- `python3 work-queue/scripts/validate_queue.py --strict-sections work-queue/examples/sample-queue.md work-queue/templates/WORK_QUEUE.md`: passed
+- `python3 -m unittest discover -s tests`: passed
+
+**Outcome**
+Changed: `work-queue/examples/sample-queue.md` (added Queue Rules section).
 
 ### WQ-034 Replace the absolute-path placeholder in SKILL.md
 
