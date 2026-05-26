@@ -20,23 +20,6 @@ _None._
 
 ## Ready
 
-### WQ-034 Replace the absolute-path placeholder in SKILL.md Validation snippet
-
-- **Type**: docs
-- **Priority**: P3
-- **Created**: 2026-05-26
-- **Area**: skill-content
-
-**Problem / Want**
-`SKILL.md` validation snippet read `python3 /absolute/path/to/installed/work-queue/scripts/validate_queue.py`. This was technically correct but ugly, and agents would copy it literally.
-
-**Acceptance**
-- [ ] Snippet shows the two real install paths (`~/.claude/skills/work-queue/...` and `.claude/skills/work-queue/...`) and tells the agent to pick whichever matches the current installation.
-- [ ] No literal "/absolute/path/to/..." string remains in SKILL.md.
-
-**Notes**
-`work-queue/SKILL.md:86-90`.
-
 ### WQ-035 Decide whether to include `## Queue Rules` in the starter template
 
 - **Type**: chore
@@ -196,6 +179,30 @@ _None._
 _None._
 
 ## Done
+
+### WQ-034 Replace the absolute-path placeholder in SKILL.md
+
+- **Type**: docs
+- **Priority**: P3
+- **Created**: 2026-05-26
+- **Area**: skill-content
+
+**Problem / Want**
+`SKILL.md` showed `python3 /absolute/path/to/installed/work-queue/scripts/validate_queue.py` — technically correct but ugly enough that an agent would copy it literally.
+
+**Acceptance**
+- [x] Snippet shows the two real install paths (`~/.claude/skills/work-queue/...` and `.claude/skills/work-queue/...`) and tells the agent to pick whichever matches the current installation.
+- [x] No literal "/absolute/path/to/..." string remains in SKILL.md.
+
+**Notes**
+Resolved as a side effect of WQ-014 (commit 18726f5, "Document the validator CLI surface in one place"). SKILL.md now uses `<skill-dir>` and explicitly instructs the agent to resolve the path relative to the SKILL.md file. The README owns the full reference, so SKILL.md does not need to enumerate install paths.
+
+**Verification**
+- `grep -n 'absolute/path/to' work-queue/SKILL.md`: no matches.
+- `python3 scripts/validate_skill.py work-queue`: passed.
+
+**Outcome**
+No new code change in this commit. Item retired as a paper-trail entry for the change that landed in commit 18726f5.
 
 ### WQ-033 Distribution channel decision recorded
 
