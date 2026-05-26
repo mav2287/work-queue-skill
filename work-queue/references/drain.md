@@ -103,6 +103,33 @@ When the project uses git:
 
 When committing, omit transient queue IDs from durable commit messages unless the project explicitly treats those IDs as durable.
 
+## Concurrency Model
+
+Drain assumes **single-writer**: one agent session at a time advances
+items through `In progress`. The skill does not implement a lock; it
+relies on the writer noticing what the queue already contains before
+taking the next item.
+
+Before claiming an item:
+
+1. Re-read the queue file (the agent may have committed since last
+   read, or another writer may have moved an item).
+2. If `In progress` already contains an item the current session did
+   not move there, stop and ask the human. Do not pile a second item
+   on top.
+3. If the host project uses git and concurrent drain is genuinely
+   needed, branch per session (`drain/<session-id>`) so commits do not
+   conflict, and merge or rebase deliberately at the end.
+
+Recommended mitigations for teams running automation:
+
+- a single drain runner per repo,
+- an advisory lock file (`WORK_QUEUE.lock`) that the runner creates on
+  start and removes on exit; treat its presence as "another drain is
+  active, abort",
+- queue-per-runner via the multi-file validator (each runner owns its
+  own `WORK_QUEUE.<owner>.md`).
+
 ## Retiring Items
 
 After a merge, release, or other durable record exists, delete Done and Cancelled items instead of keeping an archive in the queue.

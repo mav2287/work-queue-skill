@@ -20,24 +20,6 @@ _None._
 
 ## Ready
 
-### WQ-023 Document the drain concurrency model
-
-- **Type**: docs
-- **Priority**: P2
-- **Created**: 2026-05-26
-- **Area**: skill-content
-
-**Problem / Want**
-Nothing in the skill addresses what happens when two agent sessions drain the same queue at once. The likely outcomes (double-claim, conflicting commits, merge conflicts) are predictable and avoidable.
-
-**Acceptance**
-- [ ] `references/drain.md` states the assumed concurrency model (single writer per queue).
-- [ ] Recommended mitigations are documented: lock file, branch per drain session, or refusing to start drain if In progress already holds an item the current session did not claim.
-- [ ] SKILL.md links to the section.
-
-**Notes**
-A heavier "advisory file lock" feature can be its own item later.
-
 ### WQ-024 Warn against pasting secrets into queue Notes
 
 - **Type**: docs
@@ -325,6 +307,31 @@ _None._
 _None._
 
 ## Done
+
+### WQ-023 Document drain concurrency model
+
+- **Type**: docs
+- **Priority**: P2
+- **Created**: 2026-05-26
+- **Area**: skill-content
+
+**Problem / Want**
+Nothing in the skill named the assumed concurrency model; double-claims and merge conflicts were predictable failure modes.
+
+**Acceptance**
+- [x] `references/drain.md` states the assumed concurrency model (single writer per queue).
+- [x] Recommended mitigations are documented: lock file, branch per drain session, or refusing to start drain if In progress already holds an item the current session did not claim.
+- [x] SKILL.md links to the section.
+
+**Notes**
+Added a `Concurrency Model` section to `references/drain.md` naming single-writer as the assumed model and listing three pre-claim checks plus three recommended mitigations for teams running automation (single runner, advisory lock file, queue-per-runner). SKILL.md gains a one-paragraph summary that points at the section.
+
+**Verification**
+- `python3 scripts/validate_skill.py work-queue`: passed
+- `python3 work-queue/scripts/validate_queue.py --strict-sections WORK_QUEUE.md`: passed
+
+**Outcome**
+Changed: `work-queue/references/drain.md` (new section), `work-queue/SKILL.md` (one-paragraph pointer).
 
 ### WQ-022 Document the single-file scaling path
 
