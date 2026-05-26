@@ -20,23 +20,6 @@ _None._
 
 ## Ready
 
-### WQ-031 Add a verification step to README install instructions
-
-- **Type**: docs
-- **Priority**: P2
-- **Created**: 2026-05-26
-- **Area**: docs
-
-**Problem / Want**
-After running the rsync command, the user has no way to confirm the skill is loaded. They will assume failure on the first test prompt that does not auto-invoke the skill.
-
-**Acceptance**
-- [ ] README install sections include a verification command for each target (Claude Code user, Claude Code project, Codex) that exits non-zero if the skill is not installed.
-- [ ] Verification examples match the actual current CLI behavior.
-
-**Notes**
-A simple `ls "$HOME/.claude/skills/work-queue/SKILL.md"` plus a guidance line about invoking the skill is acceptable.
-
 ### WQ-032 Recommend user-vs-project install path in README
 
 - **Type**: docs
@@ -181,6 +164,30 @@ _None._
 _None._
 
 ## Done
+
+### WQ-031 README install verification
+
+- **Type**: docs
+- **Priority**: P2
+- **Created**: 2026-05-26
+- **Area**: docs
+
+**Problem / Want**
+After running the install snippet, users had no way to confirm the skill was loaded.
+
+**Acceptance**
+- [x] README install sections include a verification command for each target (Claude Code user, Claude Code project, Codex) that exits non-zero if the skill is not installed.
+- [x] Verification examples match the actual current CLI behavior.
+
+**Notes**
+Added a `Verify the install` section after the install snippets covering all three targets. Each command does two things: `test -f` on `SKILL.md` (confirms install location) and runs the bundled queue validator against the bundled starter template (confirms the validator can execute and the skill content is well-formed). Followed by a one-line prompt the user can paste in the agent to confirm discovery end-to-end.
+
+**Verification**
+- Sanity-checked the path globs against the install instructions in the same README; all three match.
+- `python3 work-queue/scripts/validate_queue.py --strict-sections work-queue/templates/WORK_QUEUE.md`: passed locally.
+
+**Outcome**
+Changed: `README.md` (new Verify the install section).
 
 ### WQ-030 Pre-commit hook for validators and tests
 

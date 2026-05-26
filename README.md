@@ -46,6 +46,46 @@ Older Codex CLI releases also discovered skills at `~/.codex/skills/`.
 If you target a release that still uses that path, mirror the install
 into both directories until you have upgraded.
 
+### Verify the install
+
+After installation, confirm the skill is present and well-formed.
+Pick the snippet that matches your install target.
+
+Claude Code, user-scope:
+
+```bash
+test -f "$HOME/.claude/skills/work-queue/SKILL.md" \
+  && python3 "$HOME/.claude/skills/work-queue/scripts/validate_queue.py" \
+       --strict-sections "$HOME/.claude/skills/work-queue/templates/WORK_QUEUE.md"
+```
+
+Claude Code, project-scope (run from the repo root):
+
+```bash
+test -f .claude/skills/work-queue/SKILL.md \
+  && python3 .claude/skills/work-queue/scripts/validate_queue.py \
+       --strict-sections .claude/skills/work-queue/templates/WORK_QUEUE.md
+```
+
+Codex CLI, user-scope:
+
+```bash
+test -f "$HOME/.agents/skills/work-queue/SKILL.md" \
+  && python3 "$HOME/.agents/skills/work-queue/scripts/validate_queue.py" \
+       --strict-sections "$HOME/.agents/skills/work-queue/templates/WORK_QUEUE.md"
+```
+
+Each snippet exits 0 only when both the `SKILL.md` file is present and
+the bundled starter template validates — that is, the skill installed
+correctly and its validator can execute. Then in the agent, ask:
+
+```text
+Use $work-queue and tell me which queue file you would operate on.
+```
+
+A response that names `WORK_QUEUE.md` (and offers to create it if
+missing) means the agent has discovered the skill.
+
 ## Invoking the Skill
 
 After installation the skill is auto-discovered by the agent from its
