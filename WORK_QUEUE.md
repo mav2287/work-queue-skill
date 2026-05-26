@@ -20,24 +20,6 @@ _None._
 
 ## Ready
 
-### WQ-020 Add an Outcome/Result convention for Done items
-
-- **Type**: feature
-- **Priority**: P1
-- **Created**: 2026-05-26
-- **Area**: skill-content
-
-**Problem / Want**
-Drain records verification but never the deliverable (commit SHA, PR link, file paths). Once a Done item is retired per the skill's rules, that link is the only durable record. Today the link lives nowhere structured.
-
-**Acceptance**
-- [ ] `references/queue-format.md` and the item template define an Outcome (or Result) subsection: commit SHA or PR link, list of changed paths, and a one-line summary of what shipped.
-- [ ] Validator warns when a Done item is missing the Outcome subsection.
-- [ ] At least one example fixture shows a Done item with the Outcome populated.
-
-**Notes**
-This is also the data a retire step would copy into release notes.
-
 ### WQ-021 Reconcile the `Local checks before asking` field across template, examples, and validator
 
 - **Type**: bug
@@ -379,6 +361,31 @@ _None._
 _None._
 
 ## Done
+
+### WQ-020 Outcome convention for Done items
+
+- **Type**: feature
+- **Priority**: P1
+- **Created**: 2026-05-26
+- **Area**: skill-content
+
+**Problem / Want**
+Drain recorded verification but never the deliverable (commit SHA, PR link, file paths). Once a Done item was retired per the skill's rules, that link lived nowhere structured.
+
+**Acceptance**
+- [x] `references/queue-format.md` and the item template define an Outcome (or Result) subsection: commit SHA or PR link, list of changed paths, and a one-line summary of what shipped.
+- [x] Validator warns when a Done item is missing the Outcome subsection.
+- [x] At least one example fixture shows a Done item with the Outcome populated.
+
+**Notes**
+Added `Outcome` to `BODY_HEADINGS` so acceptance parsing terminates at it. Done items without `**Outcome**` produce a warning. References doc gets a `Verification and Outcome on Done items` section explaining both subsections. Item template carries a short HTML comment pointing at the convention. New fixture `work-queue/examples/done-with-outcome.md` shows the full pattern (changed files, PR reference, one-line summary). Added a regression test asserting Done-without-Outcome warns. The WORK_QUEUE.md Done items have been following this convention throughout the drain.
+
+**Verification**
+- `python3 -m unittest discover -s tests`: 40 passed
+- `python3 work-queue/scripts/validate_queue.py --strict-sections WORK_QUEUE.md`: passed; Done items all carry Outcome.
+
+**Outcome**
+Changed: `work-queue/scripts/validate_queue.py` (BODY_HEADINGS + Done check), `work-queue/references/queue-format.md` (new section), `work-queue/templates/item.md` (HTML comment), `tests/test_validate_queue.py` (new test). Added: `work-queue/examples/done-with-outcome.md`.
 
 ### WQ-019 Differentiate work-queue from in-session task tools
 

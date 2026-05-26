@@ -32,6 +32,7 @@ BODY_HEADINGS = {
     "Acceptance",
     "Notes",
     "Verification",
+    "Outcome",
     "Questions",
     "Blocked on",
 }
@@ -256,6 +257,10 @@ def validate_item(
                 errors.append(message)
             else:
                 warnings.append(message)
+        if not has_heading(item, "Outcome"):
+            warnings.append(
+                f"{prefix}: Done item should record Outcome (changed files, PR or commit reference) before retirement"
+            )
 
     if item.section == "Blocked":
         if not has_blocked_marker(item):

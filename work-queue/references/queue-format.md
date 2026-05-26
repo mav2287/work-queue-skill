@@ -53,6 +53,18 @@ the future or earlier than `2020-01-01` because both are usually typos.
 Adjust the lower bound by editing `EARLIEST_SANE_DATE` in
 `work-queue/scripts/validate_queue.py` for legacy projects.
 
+## Verification and Outcome on Done items
+
+When an item moves to `Done`, the body should grow two new
+subsections:
+
+- `**Verification**` — concise list of commands run and their results
+  (passed/failed/skipped). Required by the validator under `--strict`.
+- `**Outcome**` — what shipped: changed file paths, commit SHA or PR
+  link, and a one-line summary. The validator warns when it is
+  missing on a Done item. This is the durable record that survives
+  retirement.
+
 ## Item Template
 
 ```markdown

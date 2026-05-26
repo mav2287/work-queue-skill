@@ -17,6 +17,10 @@ be shipped accidentally.
 - [ ] <failure path, edge case, or verification requirement>
 
 **Notes**
+<!-- When this item moves to Done, append a **Verification** subsection
+listing the commands run and their results, and an **Outcome**
+subsection naming changed file paths plus a commit or PR reference. -->
+
 **Local checks before asking**
 - <actual files, searches, docs, logs, or queue items inspected in the target project; do not invent>
 

@@ -147,6 +147,36 @@ class ValidateQueueTests(unittest.TestCase):
         self.assertEqual(code, 1)
         self.assertIn("Blocked item needs", err)
 
+    def test_done_without_outcome_warns(self):
+        done_body = """### WQ-001 Fix sample bug
+
+  - **Type**: bug
+  - **Priority**: P1
+  - **Created**: 2026-05-23
+  - **Area**: tests
+
+**Problem / Want**
+Sample.
+
+**Acceptance**
+- [x] Done.
+
+**Notes**
+Sample.
+
+**Verification**
+- ran the thing: passed
+"""
+        text = queue_with_ready("_None._").replace(
+            "## Done\n\n_None._",
+            "## Done\n\n" + done_body,
+        )
+        code, err = self.validate_capture(
+            text, allow_done=True, strict_sections=True
+        )
+        self.assertEqual(code, 0)
+        self.assertIn("Outcome", err)
+
     def test_done_with_unchecked_acceptance_fails(self):
         done_body = item("WQ-001") + "\n**Verification**\n- ok\n"
         text = queue_with_ready("_None._").replace(
