@@ -20,25 +20,6 @@ _None._
 
 ## Ready
 
-### WQ-012 Add a `--fix` mode for safe canonicalization
-
-- **Type**: feature
-- **Priority**: P1
-- **Created**: 2026-05-26
-- **Area**: validator
-
-**Problem / Want**
-The validator is read-only. Reordering Ready by priority/age, normalizing section order, and collapsing whitespace are all mechanical and safe — agents and humans both end up doing them by hand.
-
-**Acceptance**
-- [ ] `--fix` reorders Ready items per documented priority rule, reorders status sections to canonical order, and normalizes trailing whitespace.
-- [ ] `--fix` never changes item body content beyond whitespace.
-- [ ] `--fix` writes in place and prints a diff summary; `--fix --check` returns non-zero when changes would be made.
-- [ ] Regression tests cover both the rewriting and the no-op cases.
-
-**Notes**
-Sort order already implemented in `validate_ready_order` at `work-queue/scripts/validate_queue.py:288`.
-
 ### WQ-013 Add `--json` output for editor and agent integration
 
 - **Type**: feature
@@ -522,6 +503,32 @@ _None._
 _None._
 
 ## Done
+
+### WQ-012 Add a `--fix` mode for safe canonicalization
+
+- **Type**: feature
+- **Priority**: P1
+- **Created**: 2026-05-26
+- **Area**: validator
+
+**Problem / Want**
+The validator was read-only; reordering Ready, normalizing section order, and collapsing whitespace were all manual.
+
+**Acceptance**
+- [x] `--fix` reorders Ready items per documented priority rule, reorders status sections to canonical order, and normalizes trailing whitespace.
+- [x] `--fix` never changes item body content beyond whitespace.
+- [x] `--fix` writes in place and prints a diff summary; `--fix --check` returns non-zero when changes would be made.
+- [x] Regression tests cover both the rewriting and the no-op cases.
+
+**Notes**
+Implemented `fix_queue(text)` that parses the file into a preamble plus a sequence of named sections, sorts status sections to canonical order, sorts Ready items by `(priority, created, id)`, trims leading/trailing whitespace within each section body, and normalizes inter-section spacing. Wired `--fix` and `--fix --check` flags into `main`. Three tests: priority sort, canonical section reordering, and idempotency. Verified by running `--fix` on the live `WORK_QUEUE.md`, then `--fix --check` reports `already canonical`.
+
+**Verification**
+- `python3 -m unittest discover -s tests`: 23 passed
+- `python3 work-queue/scripts/validate_queue.py --fix WORK_QUEUE.md` then `--fix --check WORK_QUEUE.md`: rewrote, then already canonical (idempotent on live data)
+
+**Outcome**
+Changed: `work-queue/scripts/validate_queue.py` (new `fix_queue` plus `--fix`/`--check` flags), `tests/test_validate_queue.py` (three new tests).
 
 ### WQ-011 Accept multiple files in the queue validator
 

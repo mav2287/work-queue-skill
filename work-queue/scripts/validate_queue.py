@@ -402,6 +402,127 @@ def validate_in_progress(
     return ([message], []) if strict else ([], [message])
 
 
+def _item_sort_key(item_lines: list[str]) -> tuple[int, date, tuple[str, int]]:
+    header_match = ITEM_RE.match(item_lines[0])
+    item_id = header_match.group(1) if header_match else "ZZ-999"
+    priority_rank = 9
+    created = date.max
+    in_fence = False
+    for line in item_lines[1:]:
+        if FENCE_RE.match(line):
+            in_fence = not in_fence
+            continue
+        if in_fence:
+            continue
+        field_match = FIELD_RE.match(line)
+        if not field_match:
+            continue
+        if field_match.group(1) == "Priority":
+            priority_rank = PRIORITY_RANK.get(field_match.group(2).strip(), 9)
+        elif field_match.group(1) == "Created":
+            parsed = parse_date(field_match.group(2).strip())
+            if parsed is not None:
+                created = parsed
+    return priority_rank, created, id_sort_value(item_id)
+
+
+def _split_section_body(body: list[str]) -> tuple[list[str], list[list[str]]]:
+    pre: list[str] = []
+    items: list[list[str]] = []
+    current: list[str] | None = None
+    in_fence = False
+    for line in body:
+        if FENCE_RE.match(line):
+            in_fence = not in_fence
+            (current if current is not None else pre).append(line)
+            continue
+        if not in_fence and ITEM_RE.match(line):
+            if current is not None:
+                items.append(current)
+            current = [line]
+            continue
+        (current if current is not None else pre).append(line)
+    if current is not None:
+        items.append(current)
+    return pre, items
+
+
+def _trim_block(lines: list[str]) -> list[str]:
+    start = 0
+    end = len(lines)
+    while start < end and lines[start].strip() == "":
+        start += 1
+    while end > start and lines[end - 1].strip() == "":
+        end -= 1
+    return lines[start:end]
+
+
+def fix_queue(text: str) -> str:
+    lines = [line.rstrip() for line in text.splitlines()]
+
+    sections: list[tuple[str, list[str]]] = []
+    preamble: list[str] = []
+    current_name: str | None = None
+    current_body: list[str] = []
+    in_fence = False
+
+    for line in lines:
+        if FENCE_RE.match(line):
+            in_fence = not in_fence
+            target = current_body if current_name is not None else preamble
+            target.append(line)
+            continue
+        if not in_fence:
+            section_match = SECTION_RE.match(line)
+            if section_match:
+                if current_name is not None:
+                    sections.append((current_name, current_body))
+                current_name = section_match.group(1).strip()
+                current_body = []
+                continue
+        target = current_body if current_name is not None else preamble
+        target.append(line)
+    if current_name is not None:
+        sections.append((current_name, current_body))
+
+    status_sections = [(n, b) for n, b in sections if n in VALID_SECTIONS]
+    other_sections = [
+        (n, _trim_block(b)) for n, b in sections if n not in VALID_SECTIONS
+    ]
+
+    rank = {name: index for index, name in enumerate(VALID_SECTIONS)}
+    status_sections.sort(key=lambda pair: rank[pair[0]])
+
+    fixed_status: list[tuple[str, list[str]]] = []
+    for name, body in status_sections:
+        if name == "Ready":
+            pre, items = _split_section_body(body)
+            items.sort(key=_item_sort_key)
+            pre = _trim_block(pre)
+            trimmed_items = [_trim_block(it) for it in items]
+            new_body: list[str] = list(pre)
+            if pre and trimmed_items:
+                new_body.append("")
+            for index, it in enumerate(trimmed_items):
+                if index > 0:
+                    new_body.append("")
+                new_body.extend(it)
+            fixed_status.append((name, new_body))
+        else:
+            fixed_status.append((name, _trim_block(body)))
+
+    out: list[str] = list(_trim_block(preamble))
+    all_sections = other_sections + fixed_status
+    for name, body in all_sections:
+        if out:
+            out.append("")
+        out.append(f"## {name}")
+        if body:
+            out.append("")
+            out.extend(body)
+    return "\n".join(out) + "\n"
+
+
 def validate(
     path: Path,
     allow_done: bool,
@@ -485,7 +606,37 @@ def main() -> int:
         action="store_true",
         help="Promote opinionated warnings (multiple In progress, missing Verification on Done, etc.) to errors. Implies --strict-sections.",
     )
+    parser.add_argument(
+        "--fix",
+        action="store_true",
+        help="Canonicalize section order, sort Ready by priority/date/id, and normalize trailing whitespace. Rewrites the file in place.",
+    )
+    parser.add_argument(
+        "--check",
+        action="store_true",
+        help="With --fix, exit non-zero if the file would change instead of writing.",
+    )
     args = parser.parse_args()
+
+    if args.fix:
+        worst = 0
+        for queue_file in args.queue_files:
+            if not queue_file.exists():
+                print(f"ERROR: file not found: {queue_file}", file=sys.stderr)
+                worst = max(worst, 2)
+                continue
+            original = queue_file.read_text(encoding="utf-8")
+            fixed = fix_queue(original)
+            if original == fixed:
+                print(f"{queue_file}: already canonical")
+                continue
+            if args.check:
+                print(f"{queue_file}: would rewrite (run without --check to apply)")
+                worst = max(worst, 1)
+                continue
+            queue_file.write_text(fixed, encoding="utf-8")
+            print(f"{queue_file}: rewrote")
+        return worst
 
     worst = 0
     multi = len(args.queue_files) > 1

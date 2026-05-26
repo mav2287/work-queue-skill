@@ -191,6 +191,80 @@ Done without a Verification heading.
         self.assertEqual(code, 0)
         self.assertIn("duplicate title", stderr.getvalue())
 
+    def test_fix_sorts_ready_by_priority_then_id(self):
+        text = queue_with_ready(
+            item("WQ-002", "P2") + "\n" + item("WQ-001", "P1") + "\n" + item("WQ-003", "P0")
+        )
+        fixed = validate_queue.fix_queue(text)
+        ready_block = fixed[
+            fixed.index("## Ready"):fixed.index("## Needs refinement")
+        ]
+        self.assertLess(ready_block.index("WQ-003"), ready_block.index("WQ-001"))
+        self.assertLess(ready_block.index("WQ-001"), ready_block.index("WQ-002"))
+
+    def test_fix_puts_status_sections_in_canonical_order(self):
+        # Build a file where Done appears before In progress.
+        scrambled = """# Work Queue
+
+## Done
+
+_None._
+
+## In progress
+
+_None._
+
+## Ready
+
+""" + item("WQ-001") + """
+
+## Blocked
+
+_None._
+
+## Needs refinement
+
+_None._
+
+## Inbox
+
+_None._
+
+## Cancelled
+
+_None._
+"""
+        fixed = validate_queue.fix_queue(scrambled)
+        ip = fixed.index("## In progress")
+        ready = fixed.index("## Ready")
+        done = fixed.index("## Done")
+        self.assertLess(ip, ready)
+        self.assertLess(ready, done)
+
+    def test_fix_check_returns_one_when_changes_needed(self):
+        text = queue_with_ready(item("WQ-002", "P2") + "\n" + item("WQ-001", "P1"))
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "WORK_QUEUE.md"
+            path.write_text(text, encoding="utf-8")
+            argv = sys.argv
+            sys.argv = ["validate_queue.py", "--fix", "--check", str(path)]
+            try:
+                with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(
+                    io.StringIO()
+                ):
+                    code = validate_queue.main()
+            finally:
+                sys.argv = argv
+            self.assertEqual(code, 1)
+            # File must not have been modified
+            self.assertEqual(path.read_text(encoding="utf-8"), text)
+
+    def test_fix_is_idempotent(self):
+        text = queue_with_ready(item("WQ-001", "P0") + "\n" + item("WQ-002", "P1"))
+        once = validate_queue.fix_queue(text)
+        twice = validate_queue.fix_queue(once)
+        self.assertEqual(once, twice)
+
     def test_main_accepts_multiple_files_and_fails_if_any_fail(self):
         good = queue_with_ready(item("WQ-001"))
         bad = queue_with_ready(
