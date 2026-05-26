@@ -20,23 +20,6 @@ _None._
 
 ## Ready
 
-### WQ-029 Document the source schema for `agents/openai.yaml`
-
-- **Type**: docs
-- **Priority**: P2
-- **Created**: 2026-05-26
-- **Area**: docs
-
-**Problem / Want**
-The Codex interface file ships with no link to the spec it implements. Anyone editing it has to guess what fields exist and what they mean.
-
-**Acceptance**
-- [ ] `agents/openai.yaml` carries a top-of-file comment linking to the canonical schema doc for the Codex release it targets.
-- [ ] README or a new `docs/codex.md` documents the same.
-
-**Notes**
-Resolve as part of, or after, WQ-004.
-
 ### WQ-030 Add a pre-commit hook running both validators on examples and templates
 
 - **Type**: feature
@@ -215,6 +198,30 @@ _None._
 _None._
 
 ## Done
+
+### WQ-029 Document the openai.yaml schema source
+
+- **Type**: docs
+- **Priority**: P2
+- **Created**: 2026-05-26
+- **Area**: docs
+
+**Problem / Want**
+The Codex interface file shipped without a link to the spec it implements.
+
+**Acceptance**
+- [x] `agents/openai.yaml` carries a top-of-file comment linking to the canonical schema doc for the Codex release it targets.
+- [x] README or a new `docs/codex.md` documents the same.
+
+**Notes**
+Added a leading comment block to `work-queue/agents/openai.yaml` pointing at the OpenAI Codex skills documentation and naming the three required nested fields. README gains a `Codex Interface Descriptor` section that links to the same spec and names the optional `policy` and `dependencies` keys.
+
+**Verification**
+- `python3 scripts/validate_skill.py work-queue`: passed
+- `python3 work-queue/scripts/validate_queue.py --strict-sections WORK_QUEUE.md`: passed
+
+**Outcome**
+Changed: `work-queue/agents/openai.yaml` (comment header), `README.md` (Codex Interface Descriptor section).
 
 ### WQ-028 CONTRIBUTING, SECURITY, CoC, issue and PR templates
 

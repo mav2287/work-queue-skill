@@ -1,3 +1,8 @@
+# Codex CLI skill interface descriptor. Schema documented at:
+#   https://developers.openai.com/codex/skills
+# The interface key plus display_name, short_description, and
+# default_prompt are required by check_openai_yaml_presence in
+# scripts/validate_skill.py.
 interface:
   display_name: "Work Queue"
   short_description: "Intake, refine, and drain agent work queues."

@@ -67,6 +67,17 @@ Ready items until the queue is empty or blocked.
 The skill itself is the `work-queue/` directory. The root of this
 repository is packaging, CI, and documentation for publishing.
 
+## Codex Interface Descriptor
+
+The skill ships `work-queue/agents/openai.yaml` for Codex CLI's
+display and discovery layer. Schema reference:
+[developers.openai.com/codex/skills](https://developers.openai.com/codex/skills).
+The top-level `interface` key and the three nested fields
+(`display_name`, `short_description`, `default_prompt`) are required;
+`policy` and `dependencies` are optional. The bundled
+`scripts/validate_skill.py` smoke-checks that the required keys are
+present.
+
 ## When to Use This Skill
 
 This skill is for **persistent, cross-session, human-editable** work
