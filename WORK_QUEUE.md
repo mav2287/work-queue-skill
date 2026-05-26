@@ -20,25 +20,6 @@ _None._
 
 ## Ready
 
-### WQ-028 Add CONTRIBUTING, SECURITY, CODE_OF_CONDUCT, and issue/PR templates
-
-- **Type**: docs
-- **Priority**: P2
-- **Created**: 2026-05-26
-- **Area**: packaging
-
-**Problem / Want**
-Standard OSS hygiene files are missing. Contributors do not know how to file a bug, propose a change, or report a vulnerability.
-
-**Acceptance**
-- [ ] `CONTRIBUTING.md` documents the dev loop: install Python, run validators, run tests, expected style.
-- [ ] `SECURITY.md` documents how to report vulnerabilities.
-- [ ] `CODE_OF_CONDUCT.md` (Contributor Covenant or equivalent) added.
-- [ ] `.github/ISSUE_TEMPLATE/` and `.github/PULL_REQUEST_TEMPLATE.md` added with sensible defaults.
-
-**Notes**
-Templates should reference the work-queue itself as the canonical place for actionable issues, once that is set up for this repo.
-
 ### WQ-029 Document the source schema for `agents/openai.yaml`
 
 - **Type**: docs
@@ -234,6 +215,32 @@ _None._
 _None._
 
 ## Done
+
+### WQ-028 CONTRIBUTING, SECURITY, CoC, issue and PR templates
+
+- **Type**: docs
+- **Priority**: P2
+- **Created**: 2026-05-26
+- **Area**: packaging
+
+**Problem / Want**
+Standard OSS hygiene files were missing; contributors had no documented path for bugs, features, or security reports.
+
+**Acceptance**
+- [x] `CONTRIBUTING.md` documents the dev loop: install Python, run validators, run tests, expected style.
+- [x] `SECURITY.md` documents how to report vulnerabilities.
+- [x] `CODE_OF_CONDUCT.md` (Contributor Covenant or equivalent) added.
+- [x] `.github/ISSUE_TEMPLATE/` and `.github/PULL_REQUEST_TEMPLATE.md` added with sensible defaults.
+
+**Notes**
+`CONTRIBUTING.md` covers the dev loop (test + validate), the no-deps stance, the commit-message style, the release-via-tag flow, and points at the issue templates. `SECURITY.md` directs reporters to GitHub's private vulnerability flow and names in-scope/out-of-scope. `CODE_OF_CONDUCT.md` is Contributor Covenant 2.1. Issue templates mirror the queue item structure (bug + feature variants) so issues lift straight into queue items. `config.yml` disables blank issues and adds a Security contact link. PR template enforces the four-check acceptance list (tests, skill validator, queue validator, CHANGELOG).
+
+**Verification**
+- `python3 scripts/validate_skill.py work-queue`: passed
+- `python3 work-queue/scripts/validate_queue.py --strict-sections WORK_QUEUE.md`: passed
+
+**Outcome**
+Added: `CONTRIBUTING.md`, `SECURITY.md`, `CODE_OF_CONDUCT.md`, `.github/ISSUE_TEMPLATE/{bug_report,feature_request}.md`, `.github/ISSUE_TEMPLATE/config.yml`, `.github/PULL_REQUEST_TEMPLATE.md`. Changed: `CHANGELOG.md` (Unreleased section).
 
 ### WQ-027 Release CI on tag push
 
