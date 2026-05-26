@@ -27,12 +27,24 @@ mkdir -p .claude/skills/work-queue
 rsync -a --exclude='.DS_Store' work-queue/ .claude/skills/work-queue/
 ```
 
-Install for Codex as a user skill:
+Install for Codex CLI as a user skill (path documented at
+[developers.openai.com/codex/skills](https://developers.openai.com/codex/skills)):
 
 ```bash
-mkdir -p "${CODEX_HOME:-$HOME/.codex}/skills/work-queue"
-rsync -a --exclude='.DS_Store' work-queue/ "${CODEX_HOME:-$HOME/.codex}/skills/work-queue/"
+mkdir -p "$HOME/.agents/skills/work-queue"
+rsync -a --exclude='.DS_Store' work-queue/ "$HOME/.agents/skills/work-queue/"
 ```
+
+Install for Codex CLI as a repository skill (checked in for the team):
+
+```bash
+mkdir -p .agents/skills/work-queue
+rsync -a --exclude='.DS_Store' work-queue/ .agents/skills/work-queue/
+```
+
+Older Codex CLI releases also discovered skills at `~/.codex/skills/`.
+If you target a release that still uses that path, mirror the install
+into both directories until you have upgraded.
 
 ## Invoking the Skill
 

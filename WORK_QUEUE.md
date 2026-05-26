@@ -20,25 +20,6 @@ _None._
 
 ## Ready
 
-### WQ-004 Verify and document Codex skill installation
-
-- **Type**: investigation
-- **Priority**: P0
-- **Created**: 2026-05-26
-- **Area**: packaging
-
-**Problem / Want**
-The README tells Codex users to rsync the skill into `${CODEX_HOME:-$HOME/.codex}/skills/work-queue/`. This path and the `agents/openai.yaml` interface schema have not been verified against current Codex CLI documentation. If either is wrong, the README's second-largest promise ("works with Codex") is broken.
-
-**Acceptance**
-- [ ] Cross-check the Codex CLI documented skill-loader path and schema for the current Codex release.
-- [ ] Confirm `agents/openai.yaml` matches the documented interface (or update it).
-- [ ] Update README install instructions to match verified behavior, including any version constraint.
-- [ ] Record evidence (link to Codex doc or release notes) in Notes before closing.
-
-**Notes**
-Files touched: `README.md:30-35`, `work-queue/agents/openai.yaml`, `scripts/validate_skill.py:61-82`.
-
 ### WQ-005 Enforce single In progress item by default
 
 - **Type**: feature
@@ -670,6 +651,34 @@ _None._
 _None._
 
 ## Done
+
+### WQ-004 Verify and document Codex skill installation
+
+- **Type**: investigation
+- **Priority**: P0
+- **Created**: 2026-05-26
+- **Area**: packaging
+
+**Problem / Want**
+README told Codex users to install into `${CODEX_HOME:-$HOME/.codex}/skills/work-queue/`. The official path was not verified.
+
+**Acceptance**
+- [x] Cross-check the Codex CLI documented skill-loader path and schema for the current Codex release.
+- [x] Confirm `agents/openai.yaml` matches the documented interface (or update it).
+- [x] Update README install instructions to match verified behavior, including any version constraint.
+- [x] Record evidence (link to Codex doc or release notes) in Notes before closing.
+
+**Notes**
+Per [developers.openai.com/codex/skills](https://developers.openai.com/codex/skills), the documented Codex CLI scopes are: repository `.agents/skills`, user `$HOME/.agents/skills`, admin `/etc/codex/skills`. Older Codex builds (per blog.fsck.com/2025/12/19/codex-skills/) loaded from `~/.codex/skills/`. README now leads with the documented `.agents/skills` paths and includes a note about the legacy `~/.codex/skills/` path for users on older releases. The `agents/openai.yaml` schema (interface.display_name, short_description, default_prompt) matches the documented fields exactly; no change required.
+
+**Verification**
+- WebFetch against developers.openai.com/codex/skills: confirmed `.agents/skills` paths and `interface` schema.
+- `python3 scripts/validate_skill.py work-queue`: passed
+- `python3 work-queue/scripts/validate_queue.py --strict-sections WORK_QUEUE.md`: passed
+- Manual: re-read README, verified both install snippets and the legacy-path note are present.
+
+**Outcome**
+Changed: `README.md` (Codex install section now lists user + repo `.agents/skills` paths and a legacy-path note). No code change required for `agents/openai.yaml`.
 
 ### WQ-003 Fix template item ID so it parses
 
