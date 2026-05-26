@@ -20,23 +20,6 @@ _None._
 
 ## Ready
 
-### WQ-030 Add a pre-commit hook running both validators on examples and templates
-
-- **Type**: feature
-- **Priority**: P2
-- **Created**: 2026-05-26
-- **Area**: ci
-
-**Problem / Want**
-The most common regression is a docs edit that breaks the bundled examples or the starter template. CI catches it eventually; a pre-commit hook catches it before push.
-
-**Acceptance**
-- [ ] `.pre-commit-config.yaml` runs `validate_skill.py` against `work-queue/` and `validate_queue.py` against every fixture under `work-queue/examples/` and `work-queue/templates/`.
-- [ ] CONTRIBUTING (WQ-028) documents how to install it.
-
-**Notes**
-Use the `local` pre-commit hook type to avoid pulling external repos.
-
 ### WQ-031 Add a verification step to README install instructions
 
 - **Type**: docs
@@ -198,6 +181,31 @@ _None._
 _None._
 
 ## Done
+
+### WQ-030 Pre-commit hook for validators and tests
+
+- **Type**: feature
+- **Priority**: P2
+- **Created**: 2026-05-26
+- **Area**: ci
+
+**Problem / Want**
+Common regressions (docs edits breaking fixtures, validator refactors breaking tests) only surfaced in CI; a pre-commit hook catches them before push.
+
+**Acceptance**
+- [x] `.pre-commit-config.yaml` runs `validate_skill.py` against `work-queue/` and `validate_queue.py` against every fixture under `work-queue/examples/` and `work-queue/templates/`.
+- [x] CONTRIBUTING (WQ-028) documents how to install it.
+
+**Notes**
+Three `local` hooks (no external repos pulled): `validate-skill` scoped to SKILL.md / agents files / the skill validator; `validate-bundled-queues` scoped to template/example markdown and the queue validator; `regression-tests` scoped to test files and validator source. Each hook uses `pass_filenames: false` and `language: system` to keep the contributor environment minimal. `CONTRIBUTING.md` gains a section showing `pre-commit install`.
+
+**Verification**
+- `python3 scripts/validate_skill.py work-queue`: passed
+- `python3 work-queue/scripts/validate_queue.py --strict-sections work-queue/templates/WORK_QUEUE.md work-queue/examples/sample-queue.md`: passed
+- `python3 -m unittest discover -s tests`: passed
+
+**Outcome**
+Added: `.pre-commit-config.yaml`. Changed: `CONTRIBUTING.md`, `CHANGELOG.md` (Unreleased).
 
 ### WQ-029 Document the openai.yaml schema source
 

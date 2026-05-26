@@ -28,6 +28,20 @@ No third-party dependencies. The validators run on a clean stdlib
 install; do not introduce a dependency without a recorded decision in
 `CHANGELOG.md`.
 
+### Optional: pre-commit hooks
+
+Install [pre-commit](https://pre-commit.com) and run:
+
+```bash
+pre-commit install
+```
+
+The bundled `.pre-commit-config.yaml` registers three local hooks that
+run the skill validator, the queue validator against bundled fixtures,
+and the regression tests on every commit that touches the relevant
+files. The hooks are `language: system` so no extra Python environment
+is created.
+
 ## Filing changes
 
 Open an issue first when the change is larger than a few lines, so we

@@ -10,6 +10,10 @@ this project adheres to [Semantic Versioning](https://semver.org).
 
 - `CONTRIBUTING.md`, `SECURITY.md`, `CODE_OF_CONDUCT.md`, GitHub
   issue/PR templates.
+- `.pre-commit-config.yaml` registering local hooks for the skill
+  validator, the queue validator, and the regression suite.
+- `Codex Interface Descriptor` section in the README plus a comment
+  header in `work-queue/agents/openai.yaml` linking to the schema.
 
 ## [0.1.0] — 2026-05-26
 

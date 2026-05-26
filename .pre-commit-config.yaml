@@ -1,0 +1,23 @@
+repos:
+  - repo: local
+    hooks:
+      - id: validate-skill
+        name: Validate skill metadata
+        entry: python3 scripts/validate_skill.py work-queue
+        language: system
+        pass_filenames: false
+        files: ^(work-queue/SKILL\.md|work-queue/agents/.*|scripts/validate_skill\.py)$
+
+      - id: validate-bundled-queues
+        name: Validate bundled queue fixtures
+        entry: python3 work-queue/scripts/validate_queue.py --strict-sections work-queue/templates/WORK_QUEUE.md work-queue/examples/sample-queue.md
+        language: system
+        pass_filenames: false
+        files: ^(work-queue/(templates|examples)/.*\.md|work-queue/scripts/validate_queue\.py)$
+
+      - id: regression-tests
+        name: Run regression tests
+        entry: python3 -m unittest discover -s tests
+        language: system
+        pass_filenames: false
+        files: ^(tests/.*\.(py|md|json)|work-queue/scripts/.*\.py|scripts/.*\.py)$
