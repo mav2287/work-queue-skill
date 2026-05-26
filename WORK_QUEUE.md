@@ -20,24 +20,6 @@ _None._
 
 ## Ready
 
-### WQ-003 Fix template item ID so it parses
-
-- **Type**: bug
-- **Priority**: P0
-- **Created**: 2026-05-26
-- **Area**: templates
-
-**Problem / Want**
-`work-queue/templates/item.md` starts with `### WQ-XXX`. `ITEM_RE` in the validator requires `\d{3,}` after the dash, so `XXX` is silently ignored — the validator finds zero items and emits no error specific to the template placeholder. A user who copies the template verbatim believes the queue is valid.
-
-**Acceptance**
-- [ ] Template uses an ID that parses (for example `WQ-000`) so the validator reports the placeholder title instead of silently dropping the item.
-- [ ] Alternatively, the validator emits a dedicated warning when it sees an obvious placeholder ID such as `WQ-XXX` outside a fenced block.
-- [ ] A regression test covers the chosen behavior.
-
-**Notes**
-`ITEM_RE` lives at `work-queue/scripts/validate_queue.py:37`. Template at `work-queue/templates/item.md:1`.
-
 ### WQ-004 Verify and document Codex skill installation
 
 - **Type**: investigation
@@ -688,6 +670,32 @@ _None._
 _None._
 
 ## Done
+
+### WQ-003 Fix template item ID so it parses
+
+- **Type**: bug
+- **Priority**: P0
+- **Created**: 2026-05-26
+- **Area**: templates
+
+**Problem / Want**
+`work-queue/templates/item.md` started with `### WQ-XXX`. `ITEM_RE` requires `\d{3,}`, so `XXX` was silently ignored — the validator found zero items and emitted no error specific to the placeholder.
+
+**Acceptance**
+- [x] Template uses an ID that parses (for example `WQ-000`) so the validator reports the placeholder title instead of silently dropping the item.
+- [x] Alternatively, the validator emits a dedicated warning when it sees an obvious placeholder ID such as `WQ-XXX` outside a fenced block.
+- [x] A regression test covers the chosen behavior.
+
+**Notes**
+Did both halves of the acceptance: changed the template ID to `WQ-000` so the existing title placeholder check fires, and added an additional warning in `validate_item` when an item id ends in `-000`. Two new tests: one that copying the template verbatim into Ready fails validation, one that a `WQ-000` item still emits the placeholder warning.
+
+**Verification**
+- `python3 -m unittest discover -s tests`: 9 passed, 0 failed
+- `python3 work-queue/scripts/validate_queue.py --strict-sections WORK_QUEUE.md`: passed
+- `python3 scripts/validate_skill.py work-queue`: passed
+
+**Outcome**
+Changed: `work-queue/templates/item.md`, `work-queue/scripts/validate_queue.py`, `tests/test_validate_queue.py`.
 
 ### WQ-002 Correct the `/work-queue` slash-command claim
 

@@ -1,6 +1,8 @@
-### WQ-XXX <short imperative title>
+### WQ-000 <short imperative title>
 
-Replace `WQ-XXX` before saving this into a real queue.
+Replace `WQ-000` and the placeholder title before saving this into a
+real queue. The validator warns on `WQ-000` so the placeholder cannot
+be shipped accidentally.
 
 - **Type**: bug | feature | chore | docs | refactor | investigation
 - **Priority**: P0 | P1 | P2 | P3

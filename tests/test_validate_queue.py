@@ -106,6 +106,31 @@ class ValidateQueueTests(unittest.TestCase):
             self.validate_text(text, allow_done=False, strict_sections=True), 1
         )
 
+    def test_template_pasted_verbatim_into_ready_fails(self):
+        template_path = (
+            ROOT / "work-queue" / "templates" / "item.md"
+        )
+        template_body = template_path.read_text(encoding="utf-8")
+        text = queue_with_ready(template_body)
+        self.assertEqual(
+            self.validate_text(text, allow_done=False, strict_sections=True), 1
+        )
+
+    def test_placeholder_id_warns_even_when_otherwise_valid(self):
+        text = queue_with_ready(item("WQ-000"))
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "WORK_QUEUE.md"
+            path.write_text(text, encoding="utf-8")
+            stderr = io.StringIO()
+            with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(
+                stderr
+            ):
+                code = validate_queue.validate(
+                    path, allow_done=False, strict_sections=True
+                )
+        self.assertEqual(code, 0)
+        self.assertIn("placeholder", stderr.getvalue())
+
     def test_missing_sections_warn_by_default_but_fail_when_strict(self):
         text = """# Work Queue
 

@@ -191,6 +191,12 @@ def validate_item(item: Item, allow_done: bool) -> tuple[list[str], list[str]]:
     if not item.title or item.title.startswith("<"):
         errors.append(f"{prefix}: title is missing or still a placeholder")
 
+    _, _, number = item.id.rpartition("-")
+    if number.isdigit() and int(number) == 0:
+        warnings.append(
+            f"{prefix}: item id looks like the template placeholder (id ends in -000); assign a real id before draining"
+        )
+
     for field in ["Type", "Priority", "Created", "Area"]:
         if field not in fields:
             errors.append(f"{prefix}: missing field '{field}'")
