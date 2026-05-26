@@ -156,6 +156,11 @@ python3 scripts/validate_skill.py work-queue
 
 Exits `0` when the skill is well-formed, `1` otherwise.
 
+## Releases
+
+Versioned per [Semantic Versioning](https://semver.org). The full
+release history lives in [CHANGELOG.md](CHANGELOG.md).
+
 ## Repository Status
 
 This repo is structured so the root is publishable, while the actual skill lives in `work-queue/`.
