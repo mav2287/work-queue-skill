@@ -317,7 +317,27 @@ def validate_ready_order(items: list[Item]) -> tuple[list[str], list[str]]:
     return errors, warnings
 
 
-def validate(path: Path, allow_done: bool, strict_sections: bool) -> int:
+def validate_in_progress(
+    items: list[Item], strict: bool
+) -> tuple[list[str], list[str]]:
+    in_progress = [item for item in items if item.section == "In progress"]
+    if len(in_progress) <= 1:
+        return [], []
+    ids = ", ".join(f"{item.id} (line {item.line})" for item in in_progress)
+    message = (
+        f"In progress holds {len(in_progress)} items; the skill recommends one at a time: {ids}"
+    )
+    return ([message], []) if strict else ([], [message])
+
+
+def validate(
+    path: Path,
+    allow_done: bool,
+    strict_sections: bool,
+    strict: bool = False,
+) -> int:
+    if strict:
+        strict_sections = True
     text = path.read_text(encoding="utf-8")
     items, sections = parse_items(text)
     warnings: list[str] = []
@@ -341,6 +361,10 @@ def validate(path: Path, allow_done: bool, strict_sections: bool) -> int:
     order_errors, order_warnings = validate_ready_order(items)
     errors.extend(order_errors)
     warnings.extend(order_warnings)
+
+    in_progress_errors, in_progress_warnings = validate_in_progress(items, strict)
+    errors.extend(in_progress_errors)
+    warnings.extend(in_progress_warnings)
 
     if not items:
         warnings.append("no queue items found")
@@ -371,13 +395,23 @@ def main() -> int:
         action="store_true",
         help="Require the canonical section set and ordering.",
     )
+    parser.add_argument(
+        "--strict",
+        action="store_true",
+        help="Promote opinionated warnings (multiple In progress, missing Verification on Done, etc.) to errors. Implies --strict-sections.",
+    )
     args = parser.parse_args()
 
     if not args.queue_file.exists():
         print(f"ERROR: file not found: {args.queue_file}", file=sys.stderr)
         return 2
 
-    return validate(args.queue_file, args.allow_done, args.strict_sections)
+    return validate(
+        args.queue_file,
+        args.allow_done,
+        args.strict_sections,
+        strict=args.strict,
+    )
 
 
 if __name__ == "__main__":

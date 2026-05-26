@@ -20,24 +20,6 @@ _None._
 
 ## Ready
 
-### WQ-005 Enforce single In progress item by default
-
-- **Type**: feature
-- **Priority**: P1
-- **Created**: 2026-05-26
-- **Area**: validator
-
-**Problem / Want**
-`references/queue-format.md` says "Prefer one item at a time unless the user explicitly asks for parallel execution," but the validator never checks the In progress count. Drain loops can drift into multi-claim states without any signal.
-
-**Acceptance**
-- [ ] Validator warns when In progress has more than one item.
-- [ ] `--strict` (or equivalent flag) promotes the warning to an error.
-- [ ] Regression test covers both single-item and multi-item In progress states.
-
-**Notes**
-Reference: `work-queue/references/queue-format.md:81`.
-
 ### WQ-006 Validate `Blocked on: WQ-NNN` references resolve
 
 - **Type**: feature
@@ -651,6 +633,31 @@ _None._
 _None._
 
 ## Done
+
+### WQ-005 Enforce single In progress item by default
+
+- **Type**: feature
+- **Priority**: P1
+- **Created**: 2026-05-26
+- **Area**: validator
+
+**Problem / Want**
+`references/queue-format.md` says "Prefer one item at a time unless the user explicitly asks for parallel execution," but the validator never checked the In progress count.
+
+**Acceptance**
+- [x] Validator warns when In progress has more than one item.
+- [x] `--strict` (or equivalent flag) promotes the warning to an error.
+- [x] Regression test covers both single-item and multi-item In progress states.
+
+**Notes**
+Added `validate_in_progress` returning warnings/errors based on a new `--strict` flag. `--strict` implies `--strict-sections` so existing CI behavior is unchanged. Tests cover single-item (pass), multi-item default (warn, exit 0), and multi-item strict (error, exit 1).
+
+**Verification**
+- `python3 -m unittest discover -s tests`: 11 passed
+- `python3 work-queue/scripts/validate_queue.py --strict-sections WORK_QUEUE.md`: passed
+
+**Outcome**
+Changed: `work-queue/scripts/validate_queue.py` (new `validate_in_progress`, new `--strict` flag), `tests/test_validate_queue.py` (two new tests).
 
 ### WQ-004 Verify and document Codex skill installation
 

@@ -106,6 +106,31 @@ class ValidateQueueTests(unittest.TestCase):
             self.validate_text(text, allow_done=False, strict_sections=True), 1
         )
 
+    def test_single_in_progress_passes(self):
+        text = queue_with_ready("_None._").replace(
+            "## In progress\n\n_None._",
+            "## In progress\n\n" + item("WQ-001"),
+        )
+        self.assertEqual(
+            self.validate_text(text, allow_done=False, strict_sections=True), 0
+        )
+
+    def test_multiple_in_progress_warns_by_default_errors_in_strict(self):
+        two = item("WQ-001") + "\n" + item("WQ-002")
+        text = queue_with_ready("_None._").replace(
+            "## In progress\n\n_None._",
+            "## In progress\n\n" + two,
+        )
+        self.assertEqual(
+            self.validate_text(text, allow_done=False, strict_sections=True), 0
+        )
+        self.assertEqual(
+            self.validate_text(
+                text, allow_done=False, strict_sections=True, strict=True
+            ),
+            1,
+        )
+
     def test_template_pasted_verbatim_into_ready_fails(self):
         template_path = (
             ROOT / "work-queue" / "templates" / "item.md"
