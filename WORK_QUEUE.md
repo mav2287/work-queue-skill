@@ -20,23 +20,6 @@ _None._
 
 ## Ready
 
-### WQ-017 Surface the "do not overwrite unrelated user changes" rule in SKILL.md
-
-- **Type**: docs
-- **Priority**: P1
-- **Created**: 2026-05-26
-- **Area**: skill-content
-
-**Problem / Want**
-The warning lives in `references/drain.md` but not in `SKILL.md`. Agents that load only SKILL.md (the common case for token reasons) never see the rule, and "checkpoint" alone does not communicate it.
-
-**Acceptance**
-- [ ] SKILL.md Drain Loop step 9 (or a sibling line) explicitly says the agent must not overwrite unrelated user changes when committing or checkpointing.
-- [ ] The wording matches `references/drain.md` so an agent that loads both sees a consistent rule.
-
-**Notes**
-Source line at `work-queue/references/drain.md:74`. SKILL.md drain block at `work-queue/SKILL.md:65-80`.
-
 ### WQ-018 Document prompt-injection risk in queue Notes
 
 - **Type**: docs
@@ -431,6 +414,30 @@ _None._
 _None._
 
 ## Done
+
+### WQ-017 Lift the user-changes warning into SKILL.md
+
+- **Type**: docs
+- **Priority**: P1
+- **Created**: 2026-05-26
+- **Area**: skill-content
+
+**Problem / Want**
+The "do not overwrite unrelated user changes" warning lived only in `references/drain.md`. Agents that loaded only SKILL.md never saw it.
+
+**Acceptance**
+- [x] SKILL.md Drain Loop step 9 (or a sibling line) explicitly says the agent must not overwrite unrelated user changes when committing or checkpointing.
+- [x] The wording matches `references/drain.md` so an agent that loads both sees a consistent rule.
+
+**Notes**
+Step 9 now reads: "Commit, checkpoint, or otherwise isolate the completed item when the project workflow supports it. Stage only the files this item changed; never overwrite or stage unrelated user changes you noticed in step 2." That ties the warning back to step 2 (which already says "preserve unrelated user changes") and matches the operational language in `references/drain.md`.
+
+**Verification**
+- `python3 scripts/validate_skill.py work-queue`: passed
+- `python3 work-queue/scripts/validate_queue.py --strict-sections WORK_QUEUE.md`: passed
+
+**Outcome**
+Changed: `work-queue/SKILL.md` (Drain Loop step 9).
 
 ### WQ-016 Subprocess smoke test and bad-fixture suite
 

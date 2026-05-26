@@ -74,7 +74,7 @@ When the user asks to run the queue, continue without stopping after each item:
 6. Run appropriate verification.
 7. Record verification in Notes.
 8. Move the item to `Done`, or to `Blocked` with exact missing information.
-9. Commit, checkpoint, or otherwise isolate the completed item when the project workflow supports it.
+9. Commit, checkpoint, or otherwise isolate the completed item when the project workflow supports it. Stage only the files this item changed; never overwrite or stage unrelated user changes you noticed in step 2.
 10. Repeat until no Ready items remain, a command/approval/tool is blocked, or the user-specified limit is reached.
 
 Do not silently change scope. If the implementation reveals a separate problem, add a new queue item instead of expanding the current one.
