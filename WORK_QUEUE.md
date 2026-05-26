@@ -20,24 +20,6 @@ _None._
 
 ## Ready
 
-### WQ-016 Add a subprocess smoke test and bad-fixture suite
-
-- **Type**: chore
-- **Priority**: P1
-- **Created**: 2026-05-26
-- **Area**: tests
-
-**Problem / Want**
-The validators are imported as modules in tests; nothing exercises the real CLI entry point. Bad-input regressions slip through because no fixture set asserts "this file must fail with this specific error."
-
-**Acceptance**
-- [ ] One subprocess test invokes each validator as `python3 path/to/validator.py ...` against a known-good fixture and asserts exit 0.
-- [ ] `tests/fixtures/bad/` holds one fixture per error class, with a manifest mapping each fixture to its expected error substring.
-- [ ] CI runs the bad-fixture suite.
-
-**Notes**
-Existing examples at `work-queue/examples/` are good-path fixtures and can be reused.
-
 ### WQ-017 Surface the "do not overwrite unrelated user changes" rule in SKILL.md
 
 - **Type**: docs
@@ -449,6 +431,31 @@ _None._
 _None._
 
 ## Done
+
+### WQ-016 Subprocess smoke test and bad-fixture suite
+
+- **Type**: chore
+- **Priority**: P1
+- **Created**: 2026-05-26
+- **Area**: tests
+
+**Problem / Want**
+Tests imported the validator as a module; nothing exercised the CLI entry point, and no fixture set asserted "this file must fail with this specific error."
+
+**Acceptance**
+- [x] One subprocess test invokes each validator as `python3 path/to/validator.py ...` against a known-good fixture and asserts exit 0.
+- [x] `tests/fixtures/bad/` holds one fixture per error class, with a manifest mapping each fixture to its expected error substring.
+- [x] CI runs the bad-fixture suite.
+
+**Notes**
+Added five bad fixtures (duplicate-id, invalid-priority, unknown-section, done-unchecked, blocked-missing-marker) plus a `manifest.json` mapping each to its expected stderr substring. New `tests/test_bad_fixtures.py` shells out to the real CLI for both bad and good fixtures: the bad set asserts non-zero exit + substring match; the good set runs every bundled example that has a full queue structure and asserts exit 0. CI already runs the discovered tests, so no workflow change is required.
+
+**Verification**
+- `python3 -m unittest discover -s tests`: 39 passed
+- `python3 work-queue/scripts/validate_queue.py tests/fixtures/bad/duplicate-id.md`: exits non-zero with `duplicate ID` (sanity-checked one fixture manually)
+
+**Outcome**
+Added: `tests/fixtures/bad/{duplicate-id,invalid-priority,unknown-section,done-unchecked,blocked-missing-marker}.md`, `tests/fixtures/bad/manifest.json`, `tests/test_bad_fixtures.py`.
 
 ### WQ-015 Expand unit-test coverage for validate_queue.py
 
