@@ -46,6 +46,13 @@ Do not invent new types without updating the queue's own rules.
 
 When draining without extra instructions, choose the oldest `Ready` item in the highest available priority.
 
+## Created Date Sanity
+
+`Created` must be `YYYY-MM-DD`. The validator warns when `Created` is in
+the future or earlier than `2020-01-01` because both are usually typos.
+Adjust the lower bound by editing `EARLIEST_SANE_DATE` in
+`work-queue/scripts/validate_queue.py` for legacy projects.
+
 ## Item Template
 
 ```markdown

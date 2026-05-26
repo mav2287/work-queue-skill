@@ -106,6 +106,42 @@ class ValidateQueueTests(unittest.TestCase):
             self.validate_text(text, allow_done=False, strict_sections=True), 1
         )
 
+    def test_future_created_date_warns(self):
+        future_item = item("WQ-001").replace(
+            "**Created**: 2026-05-23", "**Created**: 2099-12-31"
+        )
+        text = queue_with_ready(future_item)
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "WORK_QUEUE.md"
+            path.write_text(text, encoding="utf-8")
+            stderr = io.StringIO()
+            with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(
+                stderr
+            ):
+                code = validate_queue.validate(
+                    path, allow_done=False, strict_sections=True
+                )
+        self.assertEqual(code, 0)
+        self.assertIn("future", stderr.getvalue())
+
+    def test_ancient_created_date_warns(self):
+        ancient_item = item("WQ-001").replace(
+            "**Created**: 2026-05-23", "**Created**: 2010-01-01"
+        )
+        text = queue_with_ready(ancient_item)
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "WORK_QUEUE.md"
+            path.write_text(text, encoding="utf-8")
+            stderr = io.StringIO()
+            with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(
+                stderr
+            ):
+                code = validate_queue.validate(
+                    path, allow_done=False, strict_sections=True
+                )
+        self.assertEqual(code, 0)
+        self.assertIn("before 2020", stderr.getvalue())
+
     def test_duplicate_titles_warn(self):
         text = queue_with_ready(item("WQ-001") + "\n" + item("WQ-002"))
         with tempfile.TemporaryDirectory() as tmp:

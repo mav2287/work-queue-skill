@@ -11,6 +11,8 @@ from datetime import date
 from pathlib import Path
 
 
+EARLIEST_SANE_DATE = date(2020, 1, 1)
+
 VALID_SECTIONS = [
     "In progress",
     "Blocked",
@@ -213,6 +215,18 @@ def validate_item(item: Item, allow_done: bool) -> tuple[list[str], list[str]]:
     created = fields.get("Created", "")
     if created and not validate_date(created):
         errors.append(f"{prefix}: Created must be YYYY-MM-DD")
+    elif created:
+        created_date = parse_date(created)
+        if created_date is not None:
+            today = date.today()
+            if created_date > today:
+                warnings.append(
+                    f"{prefix}: Created {created} is in the future (today is {today.isoformat()}); likely typo"
+                )
+            elif created_date < EARLIEST_SANE_DATE:
+                warnings.append(
+                    f"{prefix}: Created {created} is before {EARLIEST_SANE_DATE.isoformat()}; likely typo"
+                )
 
     if not has_heading(item, "Problem / Want"):
         errors.append(f"{prefix}: missing Problem / Want section")

@@ -20,25 +20,6 @@ _None._
 
 ## Ready
 
-### WQ-008 Range-check Created dates
-
-- **Type**: feature
-- **Priority**: P1
-- **Created**: 2026-05-26
-- **Area**: validator
-
-**Problem / Want**
-`Created` is validated for ISO-8601 format but not for plausibility. Future dates and pre-2020 dates almost always indicate a typo, and there is no signal to the agent that something is wrong.
-
-**Acceptance**
-- [ ] Validator warns when Created is in the future relative to the system clock.
-- [ ] Validator warns when Created is earlier than a documented sanity threshold (for example 2020-01-01).
-- [ ] Threshold and behavior are documented in `references/queue-format.md`.
-- [ ] Regression tests cover future, ancient, and in-range dates.
-
-**Notes**
-`validate_date` at `work-queue/scripts/validate_queue.py:154`.
-
 ### WQ-009 Promote `Done` without Verification heading to a strict-mode error
 
 - **Type**: feature
@@ -596,6 +577,32 @@ _None._
 _None._
 
 ## Done
+
+### WQ-008 Range-check Created dates
+
+- **Type**: feature
+- **Priority**: P1
+- **Created**: 2026-05-26
+- **Area**: validator
+
+**Problem / Want**
+`Created` was validated for ISO-8601 format but not plausibility. Future dates and pre-2020 dates were silent.
+
+**Acceptance**
+- [x] Validator warns when Created is in the future relative to the system clock.
+- [x] Validator warns when Created is earlier than a documented sanity threshold (for example 2020-01-01).
+- [x] Threshold and behavior are documented in `references/queue-format.md`.
+- [x] Regression tests cover future, ancient, and in-range dates.
+
+**Notes**
+Added `EARLIEST_SANE_DATE = date(2020, 1, 1)` and a check in `validate_item` that compares parsed `Created` against `today()` and the threshold. Documented in a new `Created Date Sanity` section in `references/queue-format.md`. Two regression tests cover future and ancient dates; the existing fixtures keep covering the in-range case.
+
+**Verification**
+- `python3 -m unittest discover -s tests`: 16 passed
+- `python3 work-queue/scripts/validate_queue.py --strict-sections WORK_QUEUE.md`: passed
+
+**Outcome**
+Changed: `work-queue/scripts/validate_queue.py`, `work-queue/references/queue-format.md`, `tests/test_validate_queue.py`.
 
 ### WQ-007 Warn on duplicate item titles
 
