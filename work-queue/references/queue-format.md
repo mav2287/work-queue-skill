@@ -102,6 +102,40 @@ subsections:
 
 Field and acceptance bullets may be indented, but the item heading must be a normal Markdown heading (`### WQ-001 ...`) outside of a fenced code block.
 
+## Known Limits and Scaling Path
+
+The v1 schema is a single Markdown file per queue. That is intentional:
+one file diffs cleanly, reviews easily, and stays portable across every
+agent that loads markdown.
+
+The single-file design becomes uncomfortable past roughly **50 active
+items** (Ready + In progress + Blocked + Needs refinement combined).
+Symptoms are predictable: merge conflicts on every PR, slow scroll,
+duplicate items because nobody can see the existing ones, and a
+section-reordering nightmare on hand edits.
+
+Current workarounds:
+
+- run `--fix` regularly so the file is always canonically ordered;
+- aggressively retire Done and Cancelled items;
+- split per-area (`frontend/WORK_QUEUE.md`, `backend/WORK_QUEUE.md`)
+  and lint all of them in one CI step with the multi-file invocation.
+
+Planned future evolution (not in v1):
+
+- **index plus per-item files** — `WORK_QUEUE.md` becomes a short
+  `- [ ]` index that links to per-item details under
+  `work-queue/items/WQ-NNN.md`. Each item file carries YAML
+  frontmatter (`id`, `status`, `priority`, `created`, `deps`) and
+  Markdown body. This survives merges (each item is its own file),
+  scales past hundreds of items, and keeps the at-a-glance review
+  experience of the index. It is the pattern Backlog.md and Spec Kit
+  converged on independently.
+
+The item IDs and body schema in this document are designed to migrate
+to the hybrid layout without rewriting items; only the location and
+container change.
+
 ## Section Semantics
 
 `Inbox`: raw captured input. It may be duplicated, vague, or unverified.

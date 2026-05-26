@@ -20,24 +20,6 @@ _None._
 
 ## Ready
 
-### WQ-022 Plan and document a hybrid storage path for large queues
-
-- **Type**: docs
-- **Priority**: P2
-- **Created**: 2026-05-26
-- **Area**: skill-content
-
-**Problem / Want**
-The single-file design is unwieldy past a few dozen items and conflicts on every merge. Competing tools (Backlog.md, Spec Kit) all converged on an index file plus one file per item. The skill should at minimum document the scaling limit and the planned evolution so adopters can decide.
-
-**Acceptance**
-- [ ] References include a known-limits section that names the single-file scaling ceiling and the recommended workaround for now.
-- [ ] A short design note (in references or a new design doc) sketches the hybrid index-plus-per-item layout so the item schema can be planned for it.
-- [ ] No code change required for this item; implementation is a separate future item.
-
-**Notes**
-Hybrid pattern: `WORK_QUEUE.md` index using `- [ ]` syntax, per-item details under `work-queue/items/WQ-NNN.md` with YAML frontmatter.
-
 ### WQ-023 Document the drain concurrency model
 
 - **Type**: docs
@@ -343,6 +325,31 @@ _None._
 _None._
 
 ## Done
+
+### WQ-022 Document the single-file scaling path
+
+- **Type**: docs
+- **Priority**: P2
+- **Created**: 2026-05-26
+- **Area**: skill-content
+
+**Problem / Want**
+The single-file design was undocumented as a known limit; competing tools have already converged on a hybrid layout that the skill should plan for.
+
+**Acceptance**
+- [x] References include a known-limits section that names the single-file scaling ceiling and the recommended workaround for now.
+- [x] A short design note (in references or a new design doc) sketches the hybrid index-plus-per-item layout so the item schema can be planned for it.
+- [x] No code change required for this item; implementation is a separate future item.
+
+**Notes**
+Added a `Known Limits and Scaling Path` section to `references/queue-format.md` naming ~50 active items as the comfort ceiling, listing current workarounds (run `--fix`, retire aggressively, split per-area with the multi-file validator), and sketching the planned hybrid evolution (`WORK_QUEUE.md` index plus `work-queue/items/WQ-NNN.md` per item with YAML frontmatter). The existing item schema already migrates cleanly because IDs and body structure stay stable.
+
+**Verification**
+- `python3 scripts/validate_skill.py work-queue`: passed (references/queue-format.md is linked from SKILL.md)
+- `python3 work-queue/scripts/validate_queue.py --strict-sections work-queue/templates/WORK_QUEUE.md`: passed
+
+**Outcome**
+Changed: `work-queue/references/queue-format.md` (new section).
 
 ### WQ-021 Reconcile the Local checks field
 
