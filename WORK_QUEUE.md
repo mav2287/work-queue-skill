@@ -20,23 +20,6 @@ _None._
 
 ## Ready
 
-### WQ-032 Recommend user-vs-project install path in README
-
-- **Type**: docs
-- **Priority**: P2
-- **Created**: 2026-05-26
-- **Area**: docs
-
-**Problem / Want**
-The README presents three install variants with equal weight. New users do not know which to pick or what the trade-offs are.
-
-**Acceptance**
-- [ ] README leads with one recommended install path and a one-line rationale.
-- [ ] Other paths are presented as alternatives with the trade-off named (per-repo team adoption vs. per-user convenience).
-
-**Notes**
-Recommendation should align with how the skill is most commonly used in practice; the writer of this item is welcome to pick.
-
 ### WQ-033 Decide whether to publish to discoverability channels
 
 - **Type**: investigation
@@ -164,6 +147,29 @@ _None._
 _None._
 
 ## Done
+
+### WQ-032 Recommend the project install in the README
+
+- **Type**: docs
+- **Priority**: P2
+- **Created**: 2026-05-26
+- **Area**: docs
+
+**Problem / Want**
+The Install section presented three variants with equal weight; new users could not tell which to pick.
+
+**Acceptance**
+- [x] README leads with one recommended install path and a one-line rationale.
+- [x] Other paths are presented as alternatives with the trade-off named (per-repo team adoption vs. per-user convenience).
+
+**Notes**
+Install section now opens with a short recommendation paragraph: project install (`.claude/skills/work-queue`) for repos where the queue should be checked in alongside code so the whole team gets the same behaviour; user install (`~/.claude/skills/work-queue`) for individuals who want the skill across repos they do not control. Snippet order changed so the recommended path appears first.
+
+**Verification**
+- `python3 work-queue/scripts/validate_queue.py --strict-sections WORK_QUEUE.md`: passed
+
+**Outcome**
+Changed: `README.md` (Install section).
 
 ### WQ-031 README install verification
 

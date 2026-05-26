@@ -13,18 +13,28 @@ The skill treats the queue as an active execution system, not a product backlog 
 
 ## Install
 
+**Recommended: install as a project skill** in any repo where the
+queue should be checked in alongside code. The skill, the queue file,
+and the agent all live in the repo, so everyone on the team gets the
+same behaviour and PR reviewers can see the queue change as part of
+the diff.
+
+Use the user-scope install when you want the skill available across
+every project you open — typically for individual users who do not
+control the repos they work in.
+
+Install for Claude Code as a project skill (recommended):
+
+```bash
+mkdir -p .claude/skills/work-queue
+rsync -a --exclude='.DS_Store' work-queue/ .claude/skills/work-queue/
+```
+
 Install for Claude Code as a user skill:
 
 ```bash
 mkdir -p ~/.claude/skills/work-queue
 rsync -a --exclude='.DS_Store' work-queue/ ~/.claude/skills/work-queue/
-```
-
-Install for Claude Code as a project skill:
-
-```bash
-mkdir -p .claude/skills/work-queue
-rsync -a --exclude='.DS_Store' work-queue/ .claude/skills/work-queue/
 ```
 
 Install for Codex CLI as a user skill (path documented at
