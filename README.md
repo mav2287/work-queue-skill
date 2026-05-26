@@ -67,6 +67,31 @@ Ready items until the queue is empty or blocked.
 The skill itself is the `work-queue/` directory. The root of this
 repository is packaging, CI, and documentation for publishing.
 
+## When to Use This Skill
+
+This skill is for **persistent, cross-session, human-editable** work
+tracking that lives in a repo file under version control.
+
+Use it when:
+
+- you want a queue that survives `clear`, new sessions, and machine
+  changes,
+- you want humans to read, edit, and review the queue alongside code
+  (in PRs, code review, CI),
+- you want the agent to drain Ready items autonomously over many turns.
+
+Use the host agent's in-session task tracker (Claude Code's TodoWrite,
+Codex's task list, etc.) when:
+
+- the work belongs to the current session and does not need to survive
+  it,
+- the tasks are agent-private scratchpad notes, not deliverables a
+  reviewer would want,
+- you want the host UI to render checkboxes inline as the agent works.
+
+The two are complementary: keep durable work here; use the host's
+in-session tracker for the per-turn execution log.
+
 ## Queue File
 
 The default queue file is `WORK_QUEUE.md`. A starter template lives at:

@@ -20,23 +20,6 @@ _None._
 
 ## Ready
 
-### WQ-019 Differentiate work-queue from Claude Code's in-session task tools
-
-- **Type**: docs
-- **Priority**: P1
-- **Created**: 2026-05-26
-- **Area**: docs
-
-**Problem / Want**
-Users will ask why this exists alongside Claude Code's built-in in-session task tracking. The README does not answer that question, so the skill looks redundant.
-
-**Acceptance**
-- [ ] README has a short "When to use this vs. built-in task tracking" section explaining: this queue is persistent, cross-session, human-editable, repo-versioned; built-in tools are ephemeral and agent-private.
-- [ ] SKILL.md description or Overview reinforces the same distinction in one sentence.
-
-**Notes**
-Built-in tool names vary across IDEs and versions; describe by role rather than naming the tool.
-
 ### WQ-020 Add an Outcome/Result convention for Done items
 
 - **Type**: feature
@@ -396,6 +379,30 @@ _None._
 _None._
 
 ## Done
+
+### WQ-019 Differentiate work-queue from in-session task tools
+
+- **Type**: docs
+- **Priority**: P1
+- **Created**: 2026-05-26
+- **Area**: docs
+
+**Problem / Want**
+Readers could not tell why this skill exists alongside built-in in-session task tracking.
+
+**Acceptance**
+- [x] README has a short "When to use this vs. built-in task tracking" section explaining: this queue is persistent, cross-session, human-editable, repo-versioned; built-in tools are ephemeral and agent-private.
+- [x] SKILL.md description or Overview reinforces the same distinction in one sentence.
+
+**Notes**
+Added a `When to Use This Skill` README section with two bullet lists (when to use the queue, when to use the host's in-session tracker) and a final line stating the two are complementary. SKILL.md Overview gets a one-sentence reinforcement that the queue is persistent/cross-session/human-editable and points at host trackers for ephemeral per-turn scratch.
+
+**Verification**
+- `python3 scripts/validate_skill.py work-queue`: passed
+- `python3 work-queue/scripts/validate_queue.py --strict-sections WORK_QUEUE.md`: passed
+
+**Outcome**
+Changed: `README.md` (new When to Use section), `work-queue/SKILL.md` (Overview).
 
 ### WQ-018 Document prompt-injection risk in queue Notes
 

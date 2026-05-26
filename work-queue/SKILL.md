@@ -9,6 +9,8 @@ description: Intake, refine, prioritize, and autonomously drain a Markdown work 
 
 Manage a Markdown work queue as an execution system, not an archive. Convert raw reports into clear, testable work items, then keep pulling Ready items until the queue is empty, blocked, or the user gives a stopping condition.
 
+This queue is persistent, cross-session, human-editable, and lives in the repo under version control. Use the host agent's in-session task tracker (TodoWrite, Codex tasks, etc.) for ephemeral per-turn scratchpads; use this queue for durable work that should survive the session.
+
 Default queue file: `WORK_QUEUE.md`. If the repo already has a queue/backlog file, use that file unless the user asks to migrate.
 
 ## Operating Modes
