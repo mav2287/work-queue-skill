@@ -20,24 +20,6 @@ _None._
 
 ## Ready
 
-### WQ-027 Add release CI on tag push
-
-- **Type**: feature
-- **Priority**: P2
-- **Created**: 2026-05-26
-- **Area**: ci
-
-**Problem / Want**
-There is no automation for cutting a release artifact (a zip of the `work-queue/` directory plus CHANGELOG entry). All release work today would be manual.
-
-**Acceptance**
-- [ ] GitHub Actions workflow triggers on tags matching `v*`.
-- [ ] Workflow validates the skill, packages `work-queue/` into a release zip, and attaches it to the GitHub Release.
-- [ ] Workflow extracts the matching CHANGELOG section as the release body.
-
-**Notes**
-Depends on WQ-026 for the changelog format.
-
 ### WQ-028 Add CONTRIBUTING, SECURITY, CODE_OF_CONDUCT, and issue/PR templates
 
 - **Type**: docs
@@ -252,6 +234,31 @@ _None._
 _None._
 
 ## Done
+
+### WQ-027 Release CI on tag push
+
+- **Type**: feature
+- **Priority**: P2
+- **Created**: 2026-05-26
+- **Area**: ci
+
+**Problem / Want**
+Release packaging would have been manual; no automation cut a zip + GitHub Release on tag push.
+
+**Acceptance**
+- [x] GitHub Actions workflow triggers on tags matching `v*`.
+- [x] Workflow validates the skill, packages `work-queue/` into a release zip, and attaches it to the GitHub Release.
+- [x] Workflow extracts the matching CHANGELOG section as the release body.
+
+**Notes**
+New `.github/workflows/release.yml` triggers on `v*` tags. Steps: full checkout, Python 3.12, run `validate_skill.py`, run the queue validator against bundled fixtures, run the regression tests, derive the version from the tag, extract the matching `[X.Y.Z]` section from `CHANGELOG.md` with an inline Python script (refuses to release if no section exists), build `work-queue-<version>.zip` from the `work-queue/` directory excluding `.DS_Store`, then publish via `softprops/action-gh-release@v2` with the zip attached and the extracted changelog section as the body. The CHANGELOG-extraction script was verified locally against `0.1.0` (3 KB body extracted cleanly). The workflow itself will exercise on the first tag push to a remote.
+
+**Verification**
+- Local: ran the CHANGELOG extractor with `VERSION=0.1.0` and confirmed it returns the v0.1.0 section.
+- `python3 work-queue/scripts/validate_queue.py --strict-sections WORK_QUEUE.md`: passed
+
+**Outcome**
+Added: `.github/workflows/release.yml`.
 
 ### WQ-026 Cut v0.1.0 with CHANGELOG and an annotated tag
 

@@ -1,0 +1,74 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Validate skill metadata
+        run: python3 scripts/validate_skill.py work-queue
+
+      - name: Validate bundled queue fixtures
+        run: |
+          python3 work-queue/scripts/validate_queue.py --strict-sections \
+            work-queue/templates/WORK_QUEUE.md \
+            work-queue/examples/sample-queue.md
+
+      - name: Run regression tests
+        run: python3 -m unittest discover -s tests
+
+      - name: Determine version
+        id: version
+        run: echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+
+      - name: Extract changelog section
+        id: changelog
+        run: |
+          python3 - <<'PY' > release_notes.md
+          import os
+          import re
+          version = os.environ["VERSION"]
+          text = open("CHANGELOG.md", encoding="utf-8").read()
+          pattern = re.compile(
+              rf"^## \[{re.escape(version)}\][^\n]*\n(.*?)(?=^## \[|\Z)",
+              re.DOTALL | re.MULTILINE,
+          )
+          match = pattern.search(text)
+          if not match:
+              raise SystemExit(
+                  f"CHANGELOG.md has no section for [{version}]; refusing to release"
+              )
+          print(match.group(1).strip())
+          PY
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+
+      - name: Build skill zip
+        run: |
+          zip_name="work-queue-${{ steps.version.outputs.version }}.zip"
+          (cd work-queue && zip -r "../${zip_name}" . -x '*.DS_Store')
+          echo "ZIP_NAME=${zip_name}" >> "$GITHUB_ENV"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: ${{ github.ref_name }}
+          body_path: release_notes.md
+          files: ${{ env.ZIP_NAME }}
+          fail_on_unmatched_files: true
