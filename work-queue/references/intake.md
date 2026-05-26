@@ -77,6 +77,32 @@ Place in `Blocked` when work depends on an external answer, another active item,
 
 Leave in `Inbox` only during initial capture or when the input has not yet been triaged.
 
+## Secrets Hygiene
+
+Drain encourages pasting commands, log output, and repro steps into
+Notes. The queue file is committed to the repo, mirrored to every
+collaborator, and read by every future drain session — so anything
+pasted into Notes is durable and visible.
+
+Never paste any of the following into Notes (or anywhere else in a
+queue item):
+
+- API tokens, OAuth client secrets, session cookies, JWTs
+- database connection strings or credentials
+- private keys (SSH, TLS, signing)
+- environment dumps that contain the above
+
+Recommended redaction pattern when log output is needed:
+
+```text
+Authorization: Bearer <redacted>
+DATABASE_URL=postgres://<redacted>@db/app
+```
+
+If a secret was committed in error, rotate it immediately — `git rm`
+or a force-push is not sufficient; the value must be considered
+public the moment it reaches a remote.
+
 ## Acceptance Criteria
 
 Acceptance must be observable and testable. Include failure paths, edge cases, and verification expectations.

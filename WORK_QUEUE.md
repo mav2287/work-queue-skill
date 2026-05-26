@@ -20,24 +20,6 @@ _None._
 
 ## Ready
 
-### WQ-024 Warn against pasting secrets into queue Notes
-
-- **Type**: docs
-- **Priority**: P2
-- **Created**: 2026-05-26
-- **Area**: skill-content
-
-**Problem / Want**
-Drain encourages pasting log output and repro commands into Notes. Tokens, cookies, and connection strings end up in a committed file. There is no warning today.
-
-**Acceptance**
-- [ ] `references/intake.md` warns against pasting credentials, tokens, cookies, or connection strings into Notes and links to a recommended redaction pattern.
-- [ ] Item template Notes section repeats the warning briefly.
-- [ ] Optional follow-up item filed for a validator pre-commit check.
-
-**Notes**
-A real secret scan is out of scope; documentation is the v1 deliverable.
-
 ### WQ-025 Validator warning for Inbox growth and staleness
 
 - **Type**: feature
@@ -307,6 +289,31 @@ _None._
 _None._
 
 ## Done
+
+### WQ-024 Warn against pasting secrets into queue Notes
+
+- **Type**: docs
+- **Priority**: P2
+- **Created**: 2026-05-26
+- **Area**: skill-content
+
+**Problem / Want**
+Drain encourages pasting log output and repro commands into Notes; the queue is committed, so any secret pasted in becomes durable.
+
+**Acceptance**
+- [x] `references/intake.md` warns against pasting credentials, tokens, cookies, or connection strings into Notes and links to a recommended redaction pattern.
+- [x] Item template Notes section repeats the warning briefly.
+- [x] Optional follow-up item filed for a validator pre-commit check.
+
+**Notes**
+Added a `Secrets Hygiene` section to `references/intake.md` listing prohibited content (tokens, OAuth secrets, cookies, JWTs, connection strings, private keys, env dumps), a redaction pattern, and the rotation-required reminder. Item template gets an HTML comment in Notes pointing at the section. A scanner-based pre-commit check is intentionally not in this item; the existing WQ-030 (pre-commit) covers the hook surface, and a secret-scan can be added later as its own item rather than embedded here.
+
+**Verification**
+- `python3 scripts/validate_skill.py work-queue`: passed
+- `python3 work-queue/scripts/validate_queue.py --strict-sections WORK_QUEUE.md`: passed
+
+**Outcome**
+Changed: `work-queue/references/intake.md`, `work-queue/templates/item.md`.
 
 ### WQ-023 Document drain concurrency model
 
