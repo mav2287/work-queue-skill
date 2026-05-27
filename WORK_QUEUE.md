@@ -12,30 +12,7 @@ Single source of truth for active work the agent can intake, refine, execute, ve
 
 ## In progress
 
-### WQ-048 First-class item dependencies that drain respects
-
-- **Type**: feature
-- **Priority**: P2
-- **Created**: 2026-05-26
-- **Area**: validator
-
-**Problem / Want**
-Items can depend on other items today only via free-text `Blocked on:` markers, which the validator checks for resolution (WQ-006) but the drain selector does not use. A `Depends on` field that drain treats as a scheduling constraint prevents the agent from picking an item whose prerequisites are not Done.
-
-**Acceptance**
-- [ ] New `- **Depends on**: WQ-002, WQ-005` field, recognized by `extract_fields`. Multiple comma-separated IDs allowed.
-- [ ] Validator errors when a `Depends on` ID does not exist in the queue (same shape as the existing WQ-006 check for `Blocked on`).
-- [ ] Validator warns when a Ready item depends on an item that is itself not Done (Ready, In progress, Blocked, Inbox, Needs refinement).
-- [ ] Drain selector logic in SKILL.md and `references/drain.md` is updated: when picking the next Ready item, skip any whose deps are not all Done; if every Ready item is blocked by an unmet dep, report the dep chain and stop.
-- [ ] Tests cover: valid deps, unknown-id error, unmet-dep warning, and drain-selection skip (the last via a small in-memory selector test, not a real drain).
-
-**Notes**
-**Local checks before asking**
-- `work-queue/scripts/validate_queue.py` `extract_fields`, `validate_blocked_references` (WQ-006), `validate_ready_order` for the selector logic.
-- `work-queue/references/queue-format.md` Item Template — needs the new optional field.
-- `work-queue/references/drain.md` "Start Conditions" — selector rule lives here.
-
-Selected via Y/N round on 2026-05-26; flagged as low value at current scale (the existing priority + creation-date sort handled 38 of 39 items correctly) but user wants it in the queue regardless. Useful when items have more interdependence.
+_None._
 
 ## Blocked
 
@@ -54,6 +31,38 @@ _None._
 _None._
 
 ## Done
+
+### WQ-048 First-class item dependencies that drain respects
+
+- **Type**: feature
+- **Priority**: P2
+- **Created**: 2026-05-26
+- **Area**: validator
+
+**Problem / Want**
+Items could only declare dependencies via free-text `Blocked on:`, which the validator checked (WQ-006) but the drain selector ignored. A scheduling-aware `Depends on` field keeps the drain from picking items whose prerequisites are not Done.
+
+**Acceptance**
+- [x] New `- **Depends on**: WQ-002, WQ-005` field, recognized by `extract_fields`. Multiple comma-separated IDs allowed.
+- [x] Validator errors when a `Depends on` ID does not exist in the queue (same shape as the existing WQ-006 check for `Blocked on`).
+- [x] Validator warns when a Ready item depends on an item that is itself not Done (Ready, In progress, Blocked, Inbox, Needs refinement).
+- [x] Drain selector logic in SKILL.md and `references/drain.md` is updated: when picking the next Ready item, skip any whose deps are not all Done; if every Ready item is blocked by an unmet dep, report the dep chain and stop.
+- [x] Tests cover: valid deps, unknown-id error, unmet-dep warning, and drain-selection skip (the last via a small in-memory selector test, not a real drain).
+
+**Notes**
+`FIELD_RE` widened to capture `Depends on`. New `parse_depends_on` extracts WQ-NNN ids from the comma-separated value via the existing `ID_REFERENCE_RE`. New `validate_dependencies` errors on unknown ids and self-deps, warns when a Ready item depends on a non-Done target. New `selectable_ready_items` returns the Ready items whose deps are all Done — small in-memory helper for drain selectors. SKILL.md drain step 4 now says to skip blocked deps; `references/drain.md` selection block restates the rule and the stop-on-chain behavior. Item template lists `Depends on` as an optional field. `references/queue-format.md` gains a dedicated section distinguishing `Depends on` (internal scheduling) from `Blocked on` (external dependencies). `parse_split_queue` now emits a synthetic `- **Depends on**` line from the frontmatter `deps:` field so split-layout items participate in the dependency checks too.
+
+Five new tests: valid-deps, unknown-id error, unmet Ready dep warning, selectable-ready helper skipping blocked, and self-dependency error.
+
+**Verification**
+- `python3 -m unittest discover -s tests`: 52 passed (5 new)
+- `python3 scripts/validate_skill.py work-queue`: passed
+- `python3 work-queue/scripts/validate_queue.py --strict-sections WORK_QUEUE.md`: passed
+- `mypy --strict scripts/validate_skill.py work-queue/scripts/validate_queue.py`: 0 errors
+- `markdownlint-cli2`: 20 files, 0 errors
+
+**Outcome**
+Changed: `work-queue/scripts/validate_queue.py` (FIELD_RE, parse_depends_on, validate_dependencies, selectable_ready_items, split-frontmatter emit), `work-queue/SKILL.md` (drain step 4), `work-queue/references/drain.md` (selection + stop-on-chain), `work-queue/references/queue-format.md` (new Dependencies section), `work-queue/templates/item.md` (optional field), `tests/test_validate_queue.py` (5 tests). Commit: forthcoming. One-line summary: drain now treats `Depends on` as a scheduling constraint, not just a free-text hint.
 
 ### WQ-047 Hybrid storage: index plus per-item files
 

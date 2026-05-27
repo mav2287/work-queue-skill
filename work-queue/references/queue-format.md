@@ -46,6 +46,31 @@ Do not invent new types without updating the queue's own rules.
 
 When draining without extra instructions, choose the oldest `Ready` item in the highest available priority.
 
+## Dependencies (optional)
+
+An item may declare its prerequisites with a `Depends on` field:
+
+```markdown
+- **Depends on**: WQ-002, WQ-005
+```
+
+Semantics:
+
+- The value is a comma-separated list of `WQ-NNN` ids. Whitespace
+  around commas is tolerated.
+- The validator errors when a referenced id does not exist in the
+  queue.
+- The validator warns when a `Ready` item depends on an item that is
+  not yet `Done`.
+- Drain selectors skip Ready items whose deps are not all `Done`. If
+  every Ready item is blocked, drain stops and reports the chain.
+
+`Depends on` is for scheduling — items the drain selector must not
+pick yet. It is distinct from `Blocked on`, which captures external
+dependencies (a product decision, a credential, an upstream PR) and
+moves the item to the `Blocked` section. Internal item-to-item
+ordering belongs in `Depends on`.
+
 ## Created Date Sanity
 
 `Created` must be `YYYY-MM-DD`. The validator warns when `Created` is in

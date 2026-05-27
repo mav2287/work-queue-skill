@@ -741,6 +741,82 @@ _None._
                 sys.argv = argv
         self.assertEqual(code, 0)
 
+    def test_depends_on_valid_id_passes(self):
+        done_item = item("WQ-001").replace(
+            "Sample notes.",
+            "Sample notes.\n\n**Verification**\n- ran: passed\n\n**Outcome**\nChanged: none. Summary: shipped.\n",
+        ).replace(
+            "**Acceptance**\n**MUST**\n  - [ ] Sample criterion.",
+            "**Acceptance**\n**MUST**\n  - [x] Sample criterion.",
+        )
+        ready_item = item("WQ-002").replace(
+            "  - **Area**: tests\n",
+            "  - **Area**: tests\n  - **Depends on**: WQ-001\n",
+        )
+        text = queue_with_ready(ready_item).replace(
+            "## Done\n\n_None._",
+            "## Done\n\n" + done_item,
+        )
+        code, _ = self.validate_capture(
+            text, allow_done=True, strict_sections=True
+        )
+        self.assertEqual(code, 0)
+
+    def test_depends_on_unknown_id_fails(self):
+        ready_item = item("WQ-001").replace(
+            "  - **Area**: tests\n",
+            "  - **Area**: tests\n  - **Depends on**: WQ-999\n",
+        )
+        text = queue_with_ready(ready_item)
+        code, err = self.validate_capture(
+            text, allow_done=False, strict_sections=True
+        )
+        self.assertEqual(code, 1)
+        self.assertIn("Depends on references unknown id WQ-999", err)
+
+    def test_depends_on_unmet_ready_dep_warns(self):
+        item_a = item("WQ-001")
+        item_b = item("WQ-002").replace(
+            "  - **Area**: tests\n",
+            "  - **Area**: tests\n  - **Depends on**: WQ-001\n",
+        )
+        text = queue_with_ready(item_a + "\n" + item_b)
+        code, err = self.validate_capture(
+            text, allow_done=False, strict_sections=True
+        )
+        self.assertEqual(code, 0)
+        self.assertIn(
+            "depends on WQ-001 which is not Done", err
+        )
+
+    def test_selectable_ready_items_skips_blocked_deps(self):
+        item_a = item("WQ-001")
+        item_b = item("WQ-002").replace(
+            "  - **Area**: tests\n",
+            "  - **Area**: tests\n  - **Depends on**: WQ-001\n",
+        )
+        text = queue_with_ready(item_a + "\n" + item_b)
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "WORK_QUEUE.md"
+            path.write_text(text, encoding="utf-8")
+            items, _ = validate_queue.parse_items(
+                path.read_text(encoding="utf-8")
+            )
+        selectable = validate_queue.selectable_ready_items(items)
+        self.assertEqual([s.id for s in selectable], ["WQ-001"])
+
+    def test_self_dependency_fails(self):
+        ready_item = item("WQ-001").replace(
+            "  - **Area**: tests\n",
+            "  - **Area**: tests\n  - **Depends on**: WQ-001\n",
+        )
+        text = queue_with_ready(ready_item)
+        code, err = self.validate_capture(
+            text, allow_done=False, strict_sections=True
+        )
+        self.assertEqual(code, 1)
+        self.assertIn("depends on itself", err)
+
     def test_inbox_over_threshold_warns(self):
         items = "\n".join(item(f"WQ-{n:03d}") for n in range(1, 5))
         text = queue_with_ready("_None._").replace(

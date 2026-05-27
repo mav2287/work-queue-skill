@@ -42,7 +42,9 @@ BODY_HEADINGS = {
 
 SECTION_RE = re.compile(r"^##\s+(.+?)\s*$")
 ITEM_RE = re.compile(r"^###\s+([A-Z][A-Z0-9]*-\d{3,})\s+(.+?)\s*$")
-FIELD_RE = re.compile(r"^\s*-\s+\*\*(Type|Priority|Created|Area)\*\*:\s*(.+?)\s*$")
+FIELD_RE = re.compile(
+    r"^\s*-\s+\*\*(Type|Priority|Created|Area|Depends on)\*\*:\s*(.+?)\s*$"
+)
 CHECKBOX_RE = re.compile(r"^\s*-\s+\[( |x|X)\]\s+(.+?)\s*$")
 FENCE_RE = re.compile(r"^\s*(```|~~~)")
 BOLD_HEADING_RE = re.compile(r"^\*\*([^*]+)\*\*$")
@@ -173,6 +175,10 @@ def parse_split_queue(
         for key in ("type", "priority", "created", "area"):
             value = frontmatter.get(key, "")
             synthetic.append(f"- **{key.capitalize()}**: {value}")
+        deps_raw = frontmatter.get("deps", "")
+        if deps_raw and deps_raw not in {"[]", "[ ]"}:
+            cleaned_deps = deps_raw.strip().lstrip("[").rstrip("]")
+            synthetic.append(f"- **Depends on**: {cleaned_deps}")
         synthetic.append("")
         synthetic.extend(body_lines)
 
@@ -480,6 +486,53 @@ def validate_duplicate_titles(items: list[Item]) -> tuple[list[str], list[str]]:
     return [], warnings
 
 
+def parse_depends_on(value: str) -> list[str]:
+    """Return the list of WQ-NNN ids in a comma-separated `Depends on` field."""
+    if not value:
+        return []
+    return [match.group(0) for match in ID_REFERENCE_RE.finditer(value)]
+
+
+def validate_dependencies(items: list[Item]) -> tuple[list[str], list[str]]:
+    errors: list[str] = []
+    warnings: list[str] = []
+    by_id: dict[str, Item] = {item.id: item for item in items}
+    for item in items:
+        fields = extract_fields(item)
+        depends_on = parse_depends_on(fields.get("Depends on", ""))
+        for ref in depends_on:
+            if ref == item.id:
+                errors.append(
+                    f"{item.id} line {item.line}: depends on itself"
+                )
+                continue
+            target = by_id.get(ref)
+            if target is None:
+                errors.append(
+                    f"{item.id} line {item.line}: Depends on references unknown id {ref}"
+                )
+                continue
+            if item.section == "Ready" and target.section != "Done":
+                warnings.append(
+                    f"{item.id} line {item.line}: Ready item depends on {ref} which is not Done (currently {target.section})"
+                )
+    return errors, warnings
+
+
+def selectable_ready_items(items: list[Item]) -> list[Item]:
+    """Ready items whose every `Depends on` target is Done. Used by drain selectors."""
+    by_id: dict[str, Item] = {item.id: item for item in items}
+    out: list[Item] = []
+    for item in items:
+        if item.section != "Ready":
+            continue
+        fields = extract_fields(item)
+        depends_on = parse_depends_on(fields.get("Depends on", ""))
+        if all(by_id.get(ref) is not None and by_id[ref].section == "Done" for ref in depends_on):
+            out.append(item)
+    return out
+
+
 def validate_blocked_references(
     items: list[Item],
 ) -> tuple[list[str], list[str]]:
@@ -784,6 +837,10 @@ def collect(
     ref_errors, ref_warnings = validate_blocked_references(items)
     errors.extend(ref_errors)
     warnings.extend(ref_warnings)
+
+    dep_errors, dep_warnings = validate_dependencies(items)
+    errors.extend(dep_errors)
+    warnings.extend(dep_warnings)
 
     dup_errors, dup_warnings = validate_duplicate_titles(items)
     errors.extend(dup_errors)

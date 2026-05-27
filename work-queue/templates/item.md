@@ -8,6 +8,7 @@ be shipped accidentally.
 - **Priority**: P0 | P1 | P2 | P3
 - **Created**: YYYY-MM-DD
 - **Area**: <system, feature, package, docs, ci, etc.>
+- **Depends on**: <optional; comma-separated WQ-NNN ids that must be Done before this item is selectable>
 
 **Problem / Want**
 <what is wrong or wanted, who is affected, and why it matters>

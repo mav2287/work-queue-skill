@@ -13,7 +13,9 @@ Before changing code:
 5. Move one selected item to `In progress`.
 6. Note the selection rule if it was not obvious.
 
-Default selection: highest priority first, then oldest created date, then lowest ID.
+Default selection: highest priority first, then oldest created date, then lowest ID. Before any of those tiebreakers apply, drop Ready items whose `Depends on` field references targets that are not yet `Done`. The validator surfaces the same constraint as a warning so it shows up before the drain runs.
+
+If every Ready item is blocked by an unmet dependency, the selector reports the dep chain and stops; it does not pick a blocked item. Resolving the chain means moving the prerequisite items to Done, splitting the dep, or removing the `Depends on` line if it was added in error.
 
 ## The In Progress Step Is Separate
 
