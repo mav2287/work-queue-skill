@@ -4,6 +4,34 @@ All notable changes to this skill are documented here. The format
 follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 this project adheres to [Semantic Versioning](https://semver.org).
 
+## [1.1.0] — 2026-05-27
+
+### Added
+
+- **Claude Code plugin distribution.** Repo is now its own
+  self-hosted plugin marketplace. Install with
+  `claude plugin marketplace add mav2287/work-queue-skill` followed by
+  `claude plugin install work-queue@work-queue-skill`. Updates flow
+  via `claude plugin update work-queue`. The bare-skill install path
+  (`rsync` into `~/.claude/skills/work-queue/`) remains documented as
+  a fallback.
+- `.claude-plugin/plugin.json` and `.claude-plugin/marketplace.json`
+  at the repo root.
+- README's Install section leads with the plugin path; the bare-skill
+  and Codex install paths remain as a fallback section.
+- Release workflow now publishes two release artifacts per tag: a
+  plugin zip (manifests + skill subdir, installable via
+  `claude --plugin-dir`) and the legacy bare-skill zip for rsync
+  consumers.
+- CI step that lints `plugin.json` and `marketplace.json` for valid
+  JSON and required fields.
+
+### Changed
+
+- README Invoking the Skill section adds the namespaced slash
+  command (`/work-queue:work-queue`) as the third invocation path,
+  alongside the `$work-queue` mention and automatic selection.
+
 ## [1.0.0] — 2026-05-27
 
 First stable release. The skill — its references, validators,
@@ -141,4 +169,5 @@ codes) as stable from this tag onward.
   validator, the queue validator, and the regression suite.
 - MIT license.
 
+[1.1.0]: https://github.com/mav2287/work-queue-skill/releases/tag/v1.1.0
 [1.0.0]: https://github.com/mav2287/work-queue-skill/releases/tag/v1.0.0

@@ -13,31 +13,54 @@ The skill treats the queue as an active execution system, not a product backlog 
 
 ## Install
 
-**Recommended: install as a project skill** in any repo where the
-queue should be checked in alongside code. The skill, the queue file,
-and the agent all live in the repo, so everyone on the team gets the
-same behaviour and PR reviewers can see the queue change as part of
-the diff.
+### Claude Code: install as a plugin (recommended)
 
-Use the user-scope install when you want the skill available across
-every project you open — typically for individual users who do not
-control the repos they work in.
+This repository is its own Claude Code [plugin
+marketplace](https://code.claude.com/docs/en/plugin-marketplaces). Add
+the marketplace once, install the plugin, and updates flow via
+`claude plugin update`.
 
-Install for Claude Code as a project skill (recommended):
+```bash
+claude plugin marketplace add mav2287/work-queue-skill
+claude plugin install work-queue@work-queue-skill
+```
+
+The plugin caches under `~/.claude/plugins/cache/` and the skill is
+namespaced as `work-queue:work-queue` (slash invocation), or you can
+mention it with `$work-queue`. To update later:
+
+```bash
+claude plugin update work-queue
+```
+
+### Claude Code: bare-skill install (fallback when `claude plugin` is unavailable)
+
+This is the older path: copy the skill directory into a Claude
+skill-loading location. Works without the plugin CLI.
+
+Project-scope (checked into the repo's `.claude/skills/`):
 
 ```bash
 mkdir -p .claude/skills/work-queue
 rsync -a --exclude='.DS_Store' work-queue/ .claude/skills/work-queue/
 ```
 
-Install for Claude Code as a user skill:
+User-scope (available across every project on the machine):
 
 ```bash
 mkdir -p ~/.claude/skills/work-queue
 rsync -a --exclude='.DS_Store' work-queue/ ~/.claude/skills/work-queue/
 ```
 
-Install for Codex CLI as a user skill (path documented at
+If you have both a plugin install and a bare-skill install, the
+plugin copy takes precedence.
+
+### Codex CLI
+
+Codex does not (yet) participate in the Claude Code plugin
+marketplace. Use the bare-skill install for Codex.
+
+User-scope (path documented at
 [developers.openai.com/codex/skills](https://developers.openai.com/codex/skills)):
 
 ```bash
@@ -45,7 +68,7 @@ mkdir -p "$HOME/.agents/skills/work-queue"
 rsync -a --exclude='.DS_Store' work-queue/ "$HOME/.agents/skills/work-queue/"
 ```
 
-Install for Codex CLI as a repository skill (checked in for the team):
+Repo-scope (checked in for the team):
 
 ```bash
 mkdir -p .agents/skills/work-queue
@@ -59,7 +82,15 @@ into both directories until you have upgraded.
 ### Verify the install
 
 After installation, confirm the skill is present and well-formed.
-Pick the snippet that matches your install target.
+
+For the plugin install, list installed plugins and confirm
+`work-queue` is enabled:
+
+```bash
+claude plugin list
+```
+
+For a bare-skill install, pick the snippet that matches your target.
 
 Claude Code, user-scope:
 
@@ -99,13 +130,14 @@ missing) means the agent has discovered the skill.
 ## Invoking the Skill
 
 After installation the skill is auto-discovered by the agent from its
-`SKILL.md` frontmatter. There is no separate `/work-queue` slash command
-unless the host project registers one — invoke the skill by either:
+`SKILL.md` frontmatter. Three ways to invoke it:
 
-- mentioning it in a prompt with the `$` prefix, for example
-  `use $work-queue to triage the inbox`, or
-- letting the agent select it automatically when a request matches the
-  description in `work-queue/SKILL.md`.
+- **Mention prefix** — `use $work-queue to triage the inbox`. Works
+  regardless of install method.
+- **Automatic selection** — the agent picks the skill on its own when
+  a request matches the description in `SKILL.md`.
+- **Namespaced slash command** (plugin install only) —
+  `/work-queue:work-queue` selects the plugin's skill explicitly.
 
 A first-run prompt that exercises the skill end-to-end:
 

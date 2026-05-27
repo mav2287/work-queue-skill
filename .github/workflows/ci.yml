@@ -35,6 +35,25 @@ jobs:
         run: python3 -m mypy --strict scripts/validate_skill.py work-queue/scripts/validate_queue.py
       - name: Smoke-check skill metadata
         run: python3 scripts/validate_skill.py work-queue
+      - name: Lint plugin and marketplace manifests
+        run: |
+          python3 - <<'PY'
+          import json, sys
+          for path in (".claude-plugin/plugin.json", ".claude-plugin/marketplace.json"):
+              json.load(open(path))
+              print(f"OK: {path} is valid JSON")
+          plugin = json.load(open(".claude-plugin/plugin.json"))
+          for field in ("name", "description", "version"):
+              if not plugin.get(field):
+                  sys.exit(f"plugin.json missing required field: {field}")
+          marketplace = json.load(open(".claude-plugin/marketplace.json"))
+          for field in ("name", "owner", "plugins"):
+              if not marketplace.get(field):
+                  sys.exit(f"marketplace.json missing required field: {field}")
+          if not marketplace["plugins"]:
+              sys.exit("marketplace.json has no plugins listed")
+          print("OK: plugin and marketplace manifests have required fields")
+          PY
       - name: Validate starter queue
         run: python3 work-queue/scripts/validate_queue.py --strict-sections work-queue/templates/WORK_QUEUE.md
       - name: Validate sample queue

@@ -1,0 +1,26 @@
+{
+  "name": "work-queue-skill",
+  "description": "Self-hosted marketplace for the work-queue skill — intake, refine, and drain agent work queues.",
+  "owner": {
+    "name": "mav2287"
+  },
+  "plugins": [
+    {
+      "name": "work-queue",
+      "source": "./",
+      "description": "Markdown work-queue skill for Claude Code and Codex.",
+      "homepage": "https://github.com/mav2287/work-queue-skill",
+      "repository": "https://github.com/mav2287/work-queue-skill",
+      "license": "MIT",
+      "keywords": [
+        "work-queue",
+        "task-management",
+        "agent-skill",
+        "markdown",
+        "drain",
+        "intake",
+        "backlog"
+      ]
+    }
+  ]
+}

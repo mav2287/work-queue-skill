@@ -58,11 +58,22 @@ jobs:
         env:
           VERSION: ${{ steps.version.outputs.version }}
 
-      - name: Build skill zip
+      - name: Build plugin zip
         run: |
-          zip_name="work-queue-${{ steps.version.outputs.version }}.zip"
-          (cd work-queue && zip -r "../${zip_name}" . -x '*.DS_Store')
-          echo "ZIP_NAME=${zip_name}" >> "$GITHUB_ENV"
+          version="${{ steps.version.outputs.version }}"
+          plugin_zip="work-queue-plugin-${version}.zip"
+          skill_zip="work-queue-${version}.zip"
+          # Plugin zip: full plugin root (manifests + skill subdir).
+          # Installable via `claude --plugin-dir <zip>` or unzipped into
+          # ~/.claude/plugins/cache/ when fetched by the marketplace.
+          zip -r "$plugin_zip" .claude-plugin work-queue -x '*.DS_Store'
+          # Skill zip: legacy bare-skill bundle, for users who rsync into
+          # ~/.claude/skills/work-queue/ directly.
+          (cd work-queue && zip -r "../$skill_zip" . -x '*.DS_Store')
+          {
+            echo "PLUGIN_ZIP=$plugin_zip"
+            echo "SKILL_ZIP=$skill_zip"
+          } >> "$GITHUB_ENV"
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v3
@@ -70,5 +81,7 @@ jobs:
           tag_name: ${{ github.ref_name }}
           name: ${{ github.ref_name }}
           body_path: release_notes.md
-          files: ${{ env.ZIP_NAME }}
+          files: |
+            ${{ env.PLUGIN_ZIP }}
+            ${{ env.SKILL_ZIP }}
           fail_on_unmatched_files: true
