@@ -12,14 +12,6 @@ Single source of truth for active work the agent can intake, refine, execute, ve
 
 ## In progress
 
-_None._
-
-## Blocked
-
-_None._
-
-## Ready
-
 ### WQ-047 Hybrid storage: index plus per-item files
 
 - **Type**: feature
@@ -45,6 +37,12 @@ Past ~60-80 active items the single-file design becomes unwieldy (merge conflict
 - Existing fixtures under `work-queue/examples/` will need a split-layout counterpart.
 
 Large effort: new parsing path, new subcommand, fixtures, docs. Selected via Y/N round on 2026-05-26; flagged as premature for current scale but user wants it in the queue regardless. Defer drain until current single-file usage actually feels constrained.
+
+## Blocked
+
+_None._
+
+## Ready
 
 ### WQ-048 First-class item dependencies that drain respects
 
