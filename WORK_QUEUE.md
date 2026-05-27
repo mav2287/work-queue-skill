@@ -12,14 +12,6 @@ Single source of truth for active work the agent can intake, refine, execute, ve
 
 ## In progress
 
-_None._
-
-## Blocked
-
-_None._
-
-## Ready
-
 ### WQ-046 Auto-populate Outcome on Done; keep Verification manual
 
 - **Type**: feature
@@ -43,6 +35,12 @@ The Outcome convention (WQ-020) requires every Done item to list changed file pa
 - `work-queue/templates/item.md` HTML-comment hint (added in WQ-020).
 
 Selected via Y/N round on 2026-05-26 with the explicit split: Outcome auto, Verification manual. Do not implement Verification templating.
+
+## Blocked
+
+_None._
+
+## Ready
 
 ### WQ-047 Hybrid storage: index plus per-item files
 
