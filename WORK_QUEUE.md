@@ -12,14 +12,6 @@ Single source of truth for active work the agent can intake, refine, execute, ve
 
 ## In progress
 
-_None._
-
-## Blocked
-
-_None._
-
-## Ready
-
 ### WQ-048 First-class item dependencies that drain respects
 
 - **Type**: feature
@@ -44,6 +36,14 @@ Items can depend on other items today only via free-text `Blocked on:` markers, 
 - `work-queue/references/drain.md` "Start Conditions" — selector rule lives here.
 
 Selected via Y/N round on 2026-05-26; flagged as low value at current scale (the existing priority + creation-date sort handled 38 of 39 items correctly) but user wants it in the queue regardless. Useful when items have more interdependence.
+
+## Blocked
+
+_None._
+
+## Ready
+
+_None._
 
 ## Needs refinement
 
