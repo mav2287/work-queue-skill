@@ -19,7 +19,12 @@ be shipped accidentally.
 **Notes**
 <!-- When this item moves to Done, append a **Verification** subsection
 listing the commands run and their results, and an **Outcome**
-subsection naming changed file paths plus a commit or PR reference. -->
+subsection naming changed file paths plus a commit or PR reference.
+
+If this item is left in **In progress** when a session ends, the next
+session must ask the user before claiming new work alongside it
+(continue / re-claim / revert). See references/drain.md
+"Resuming a Drain". -->
 
 **Local checks before asking**
 - <list actual files, searches, docs, logs, or queue items inspected; never write "Example only">

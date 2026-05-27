@@ -103,6 +103,32 @@ When the project uses git:
 
 When committing, omit transient queue IDs from durable commit messages unless the project explicitly treats those IDs as durable.
 
+## Resuming a Drain
+
+A drain may end with an item left in `In progress`: the previous
+session was interrupted, the model errored out, the user hit Ctrl-C,
+or the context window filled. The next session must not silently take
+new work alongside the leftover item.
+
+Before selecting any Ready item, inspect `## In progress`. Three cases:
+
+1. **Empty.** Proceed normally.
+2. **One or more items, all moved there by the current session.** Continue with the active item; do not pick a new one.
+3. **One or more items, at least one not moved by the current session.** Stop and ask the user to choose:
+   - **Continue** the existing item (re-read its acceptance, verify the worktree state, and resume the implementation).
+   - **Re-claim** it for this session (treat it as if this session put it there; useful when the previous session was the same human running the same agent).
+   - **Revert** it to `Ready` (the previous attempt's work is discarded or salvaged separately; the item goes back into the selection pool).
+
+Example agent prompts the human can paste back:
+
+```text
+Resume WQ-014: continue from where the prior session stopped.
+Re-claim WQ-014 for this session.
+Revert WQ-014 to Ready; I'll restart it.
+```
+
+Knowing which session moved an item is a soft check — the agent decides based on whether the worktree, recent commits, and conversation context match. When in doubt, treat the item as not-from-this-session and ask.
+
 ## Concurrency Model
 
 Drain assumes **single-writer**: one agent session at a time advances

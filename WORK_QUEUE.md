@@ -20,28 +20,6 @@ _None._
 
 ## Ready
 
-### WQ-043 Drain session resumption
-
-- **Type**: feature
-- **Priority**: P2
-- **Created**: 2026-05-26
-- **Area**: skill-content
-
-**Problem / Want**
-The skill's drain loop has undefined behavior when a session is interrupted (laptop closed, model error, context limit). The next session may silently double-claim an existing In progress item, silently skip it, or guess. A resume rule removes the ambiguity.
-
-**Acceptance**
-- [ ] SKILL.md Drain Loop adds a pre-step: before selecting a new Ready item, inspect `In progress`. If it holds an item the current session did not move there, stop and ask the user to continue / re-claim / revert to Ready.
-- [ ] `references/drain.md` adds a `Resuming a Drain` section with the three options spelled out and example agent prompts for each.
-- [ ] At least one bundled example or comment in `templates/item.md` shows the resume-handoff pattern.
-
-**Notes**
-**Local checks before asking**
-- `work-queue/SKILL.md` Drain Loop block (steps 1-3 around selection).
-- `work-queue/references/drain.md` "Start Conditions" and "Concurrency Model" sections — the resume rule layers on top of single-writer concurrency (WQ-023).
-
-Pure skill-content change, no code. Selected via Y/N round on 2026-05-26; user prioritized it as "real value, ship it."
-
 ### WQ-044 Enforce the In progress step in drain
 
 - **Type**: feature
@@ -173,6 +151,32 @@ _None._
 _None._
 
 ## Done
+
+### WQ-043 Drain session resumption
+
+- **Type**: feature
+- **Priority**: P2
+- **Created**: 2026-05-26
+- **Area**: skill-content
+
+**Problem / Want**
+Drain had undefined behavior when a session was interrupted; the next session could silently double-claim, skip, or guess.
+
+**Acceptance**
+- [x] SKILL.md Drain Loop adds a pre-step: before selecting a new Ready item, inspect `In progress`. If it holds an item the current session did not move there, stop and ask the user to continue / re-claim / revert to Ready.
+- [x] `references/drain.md` adds a `Resuming a Drain` section with the three options spelled out and example agent prompts for each.
+- [x] At least one bundled example or comment in `templates/item.md` shows the resume-handoff pattern.
+
+**Notes**
+Added the pre-selection check as the new Drain Loop step 3 and renumbered the remaining steps; the previous step 3 (select) now sits at step 4. `Resuming a Drain` is now the first subsection in drain.md, layered above the existing `Concurrency Model` since resume is the multi-session counterpart of single-writer. The template's `**Notes**` HTML comment now points at the handoff section.
+
+**Verification**
+- `python3 scripts/validate_skill.py work-queue`: passed
+- `python3 work-queue/scripts/validate_queue.py --strict-sections WORK_QUEUE.md`: passed
+- `python3 -m unittest discover -s tests`: 42 passed
+
+**Outcome**
+Changed: `work-queue/SKILL.md` (Drain Loop step 3 + renumber), `work-queue/references/drain.md` (Resuming a Drain section), `work-queue/templates/item.md` (HTML comment).
 
 ### WQ-039 LICENSE year and holder verified
 
