@@ -18,6 +18,7 @@ Default queue file: `WORK_QUEUE.md`. If the repo already has a queue/backlog fil
 Choose the mode from the user's request:
 
 - **Intake**: capture many raw reports without starting implementation.
+- **Expand**: turn one source document (PRD, design doc, long issue body) into a Ready-bar set of items in one pass, with IDs, types, priorities, acceptance criteria, and inter-item ordering pre-populated. See `references/intake.md` "Expand Mode".
 - **Refine**: raise existing items to the Ready bar.
 - **Drain**: repeatedly execute Ready items with minimal user intervention.
 - **Audit**: validate queue format, readiness, priority order, and blocked/done hygiene.

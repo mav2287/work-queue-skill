@@ -77,6 +77,71 @@ Place in `Blocked` when work depends on an external answer, another active item,
 
 Leave in `Inbox` only during initial capture or when the input has not yet been triaged.
 
+## Expand Mode
+
+Use `Expand` mode when the user hands the agent **one** source
+document — a PRD, design doc, long bug report, RFC, or GitHub issue
+body — and wants it decomposed into many queue items in one pass.
+Expand is intake with a higher ceiling on output: instead of capturing
+N raw reports, the agent reads one document and emits N executable
+items.
+
+### Process
+
+1. **Read the whole document first.** Do not start emitting items until
+   the full scope is understood. Skim the table of contents, headings,
+   and any explicit acceptance the document already names.
+2. **Identify atomic units of work.** Each unit is something a single
+   agent session can complete end to end and verify. A "rebuild the
+   billing UI" line is not atomic; "add the empty state to the
+   invoice list" is.
+3. **Assign IDs sequentially.** Pick the next free `WQ-NNN` and
+   increment. Never reuse retired IDs (`queue-format.md`).
+4. **Draft acceptance for each item.** Acceptance must be observable
+   and testable — see `references/intake.md` "Acceptance Criteria".
+   The Expand pass owns the acceptance; do not punt it to the drain
+   session.
+5. **Identify inter-item dependencies.** When item B genuinely cannot
+   start until item A is Done, record it on item B (the schema for
+   this is in `queue-format.md`).
+6. **Place each item in the right section.** Items that satisfy the
+   Ready bar go to `Ready`. Items the source document leaves
+   ambiguous go to `Needs refinement` with the specific gap named.
+   Items dependent on an external answer go to `Blocked`.
+7. **Run the validator** on the resulting queue file before handing
+   back to the user.
+
+### The Question Gate Still Applies
+
+Expand does not bypass the question gate. If the source document
+does not say what the failure path should be, or whether a behavior
+applies to one role or all, the resulting item goes to `Needs
+refinement` with the gap named in Notes. It does **not** go to
+`Ready` with a guess and a comment that says "TBD".
+
+The `Local checks before asking` evidence is still required: items
+that look ready from a quick read of the source but rest on
+unverified assumptions about the target project go to `Needs
+refinement` until the assumptions are checked.
+
+### Volume and Cost
+
+Expand can emit dozens of items in a single pass. Two cautions:
+
+- **Do not pad the queue.** Every item the agent drafts is something
+  a future session has to read. Avoid creating boilerplate items
+  ("update the README to mention X") unless the source explicitly
+  asks for it.
+- **Stop and confirm before emitting more than ~25 items.** Long
+  expansions risk pulling in scope the user did not intend. Emit the
+  first batch, ask whether the user wants to continue, and proceed
+  only on explicit yes.
+
+### Example
+
+See `work-queue/examples/expand-input.md` for a short example PRD and
+`work-queue/examples/expand-output.md` for the resulting queue items.
+
 ## Secrets Hygiene
 
 Drain encourages pasting commands, log output, and repro steps into

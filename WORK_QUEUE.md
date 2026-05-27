@@ -12,29 +12,7 @@ Single source of truth for active work the agent can intake, refine, execute, ve
 
 ## In progress
 
-### WQ-045 Expand mode: decompose a PRD or issue into Ready items
-
-- **Type**: feature
-- **Priority**: P2
-- **Created**: 2026-05-26
-- **Area**: skill-content
-
-**Problem / Want**
-Bulk intake today is manual: every item is written by hand. When a PRD, design doc, or long GitHub issue body needs to become a queue, the agent should be able to decompose it into Ready-bar items in one pass, with IDs, types, priorities, acceptance criteria, and inter-item ordering pre-populated.
-
-**Acceptance**
-- [ ] SKILL.md Operating Modes lists `Expand` as a sixth mode with a one-paragraph description.
-- [ ] `references/intake.md` gains an `Expand` section describing the decomposition process: identify atomic units of work, assign IDs, draft acceptance, identify dependencies, place each item in the right section.
-- [ ] `references/intake.md` documents how Expand interacts with the question gate (it does not bypass it: items whose scope cannot be inferred from the source go to `Needs refinement` with the gaps named).
-- [ ] One bundled example fixture under `work-queue/examples/expand-input.md` (a short PRD) plus `work-queue/examples/expand-output.md` (the resulting Ready items) shows the pattern end to end.
-
-**Notes**
-**Local checks before asking**
-- `work-queue/SKILL.md` Operating Modes section.
-- `work-queue/references/intake.md` Intake Workflow.
-- `work-queue/references/queue-format.md` Item Template (the schema Expand must emit).
-
-The most recent drain captured 39 items from a code-review audit by hand; Expand mode would have turned that into one paste. Selected via Y/N round on 2026-05-26 with the caveat that value depends on how often batch intake is needed in real use.
+_None._
 
 ## Blocked
 
@@ -126,6 +104,35 @@ _None._
 _None._
 
 ## Done
+
+### WQ-045 Expand mode
+
+- **Type**: feature
+- **Priority**: P2
+- **Created**: 2026-05-26
+- **Area**: skill-content
+
+**Problem / Want**
+Bulk intake was manual; one PRD/issue body becoming many queue items took one hand-edit per item.
+
+**Acceptance**
+- [x] SKILL.md Operating Modes lists `Expand` as a sixth mode with a one-paragraph description.
+- [x] `references/intake.md` gains an `Expand` section describing the decomposition process: identify atomic units of work, assign IDs, draft acceptance, identify dependencies, place each item in the right section.
+- [x] `references/intake.md` documents how Expand interacts with the question gate (it does not bypass it: items whose scope cannot be inferred from the source go to `Needs refinement` with the gaps named).
+- [x] One bundled example fixture under `work-queue/examples/expand-input.md` (a short PRD) plus `work-queue/examples/expand-output.md` (the resulting Ready items) shows the pattern end to end.
+
+**Notes**
+SKILL.md Operating Modes now lists six modes (added Expand between Intake and Refine). `references/intake.md` gains an `Expand Mode` section with a seven-step process, an explicit "question gate still applies" subsection, a "volume and cost" caution (~25-item batch limit), and a pointer to the bundled example. Example fixtures decompose a four-goal invoice PRD into four Ready items (WQ-101..104) plus one Needs refinement item (WQ-105) for the PRD's explicitly open question — demonstrating the question-gate behavior.
+
+Bundled example tripped the existing PLACEHOLDER_RE on JSX-like `<EmptyState />` and `<div>` references. Rewrote those lines to use bare names and prose instead of angle-bracket syntax so the example fixture validates clean.
+
+**Verification**
+- `python3 work-queue/scripts/validate_queue.py --strict-sections work-queue/examples/expand-output.md`: passed, 0 warnings
+- `python3 scripts/validate_skill.py work-queue`: passed
+- `python3 -m unittest discover -s tests`: 42 passed
+
+**Outcome**
+Changed: `work-queue/SKILL.md` (Operating Modes), `work-queue/references/intake.md` (new Expand Mode section). Added: `work-queue/examples/expand-input.md`, `work-queue/examples/expand-output.md`.
 
 ### WQ-044 Enforce the In progress step in drain
 
