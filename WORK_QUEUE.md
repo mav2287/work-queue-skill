@@ -20,7 +20,149 @@ _None._
 
 ## Ready
 
-_None._
+### WQ-043 Drain session resumption
+
+- **Type**: feature
+- **Priority**: P2
+- **Created**: 2026-05-26
+- **Area**: skill-content
+
+**Problem / Want**
+The skill's drain loop has undefined behavior when a session is interrupted (laptop closed, model error, context limit). The next session may silently double-claim an existing In progress item, silently skip it, or guess. A resume rule removes the ambiguity.
+
+**Acceptance**
+- [ ] SKILL.md Drain Loop adds a pre-step: before selecting a new Ready item, inspect `In progress`. If it holds an item the current session did not move there, stop and ask the user to continue / re-claim / revert to Ready.
+- [ ] `references/drain.md` adds a `Resuming a Drain` section with the three options spelled out and example agent prompts for each.
+- [ ] At least one bundled example or comment in `templates/item.md` shows the resume-handoff pattern.
+
+**Notes**
+**Local checks before asking**
+- `work-queue/SKILL.md` Drain Loop block (steps 1-3 around selection).
+- `work-queue/references/drain.md` "Start Conditions" and "Concurrency Model" sections — the resume rule layers on top of single-writer concurrency (WQ-023).
+
+Pure skill-content change, no code. Selected via Y/N round on 2026-05-26; user prioritized it as "real value, ship it."
+
+### WQ-044 Enforce the In progress step in drain
+
+- **Type**: feature
+- **Priority**: P2
+- **Created**: 2026-05-26
+- **Area**: skill-content
+
+**Problem / Want**
+The skill says "move exactly one item to In progress" but nothing in the drain loop or the validator enforces it. The recent production-readiness drain bypassed In progress on every item (Ready → Done in one Edit). Either the rule is real and should be enforced, or it should be dropped. The current gap is the worst option.
+
+**Acceptance**
+- [ ] SKILL.md Drain Loop step 4 is rewritten to make the Ready → In progress edit an explicit and separate step that must complete (and ideally commit) before any code edits begin.
+- [ ] `references/drain.md` adds one line: "do not collapse Ready → In progress and In progress → Done into a single Edit."
+- [ ] `validate_queue.py` gains a warning when a Done item is present and `git log -- WORK_QUEUE.md` shows no intermediate revision in which that item lived under `## In progress`. If the git-history check is out of scope, fall back to a SKILL.md-only enforcement.
+
+**Notes**
+**Local checks before asking**
+- `work-queue/SKILL.md:67-78` Drain Loop steps.
+- `work-queue/scripts/validate_queue.py` `validate_in_progress` (lifted in WQ-005).
+- The most recent 39 commits on this branch demonstrate the bypass: every Done item appears in a single Edit that does not pass through In progress.
+
+The docs-only half is a small change; the git-history validator check is a larger one. Either half satisfies the spirit. Selected via Y/N round on 2026-05-26.
+
+### WQ-045 Expand mode: decompose a PRD or issue into Ready items
+
+- **Type**: feature
+- **Priority**: P2
+- **Created**: 2026-05-26
+- **Area**: skill-content
+
+**Problem / Want**
+Bulk intake today is manual: every item is written by hand. When a PRD, design doc, or long GitHub issue body needs to become a queue, the agent should be able to decompose it into Ready-bar items in one pass, with IDs, types, priorities, acceptance criteria, and inter-item ordering pre-populated.
+
+**Acceptance**
+- [ ] SKILL.md Operating Modes lists `Expand` as a sixth mode with a one-paragraph description.
+- [ ] `references/intake.md` gains an `Expand` section describing the decomposition process: identify atomic units of work, assign IDs, draft acceptance, identify dependencies, place each item in the right section.
+- [ ] `references/intake.md` documents how Expand interacts with the question gate (it does not bypass it: items whose scope cannot be inferred from the source go to `Needs refinement` with the gaps named).
+- [ ] One bundled example fixture under `work-queue/examples/expand-input.md` (a short PRD) plus `work-queue/examples/expand-output.md` (the resulting Ready items) shows the pattern end to end.
+
+**Notes**
+**Local checks before asking**
+- `work-queue/SKILL.md` Operating Modes section.
+- `work-queue/references/intake.md` Intake Workflow.
+- `work-queue/references/queue-format.md` Item Template (the schema Expand must emit).
+
+The most recent drain captured 39 items from a code-review audit by hand; Expand mode would have turned that into one paste. Selected via Y/N round on 2026-05-26 with the caveat that value depends on how often batch intake is needed in real use.
+
+### WQ-046 Auto-populate Outcome on Done; keep Verification manual
+
+- **Type**: feature
+- **Priority**: P2
+- **Created**: 2026-05-26
+- **Area**: skill-content
+
+**Problem / Want**
+The Outcome convention (WQ-020) requires every Done item to list changed file paths plus a commit or PR reference. That data is mechanical: `git diff --name-only` since the item moved to In progress, plus the most recent commit SHA. The agent has it; writing it by hand is pure boilerplate. Verification, by contrast, is the variable part — what was run and what passed — and should remain hand-written.
+
+**Acceptance**
+- [ ] SKILL.md Drain Loop step 7 (or a new step) instructs the agent: when moving an item to Done, populate Outcome with the list of changed paths between the In progress entry and the moment of completion, plus the head commit SHA at completion.
+- [ ] The auto-populated Outcome includes a one-line summary slot the agent fills, so the field is not purely mechanical.
+- [ ] Verification remains explicitly hand-written; the SKILL.md instruction calls this out so the agent does not auto-fill it.
+- [ ] `references/queue-format.md` Outcome section documents the auto-populated shape and shows one example.
+
+**Notes**
+**Local checks before asking**
+- `work-queue/SKILL.md` Drain Loop and Retention sections.
+- `work-queue/references/queue-format.md` "Verification and Outcome on Done items" section (added in WQ-020).
+- `work-queue/templates/item.md` HTML-comment hint (added in WQ-020).
+
+Selected via Y/N round on 2026-05-26 with the explicit split: Outcome auto, Verification manual. Do not implement Verification templating.
+
+### WQ-047 Hybrid storage: index plus per-item files
+
+- **Type**: feature
+- **Priority**: P2
+- **Created**: 2026-05-26
+- **Area**: validator
+
+**Problem / Want**
+Past ~60-80 active items the single-file design becomes unwieldy (merge conflicts, slow scroll, hard to spot duplicates). The competing pattern — short index file linking to one file per item — survives merges and scales further. The schema is designed to migrate cleanly (WQ-022 documents the path); this item implements it.
+
+**Acceptance**
+- [ ] `WORK_QUEUE.md` may take a "split" shape: an index using `- [ ]` syntax with one entry per item, linking to `work-queue/items/WQ-NNN.md`. Each per-item file carries YAML frontmatter (`id`, `status`, `priority`, `created`, `area`, `deps`) plus the same Markdown body as today.
+- [ ] `validate_queue.py` detects which layout a queue uses and runs the same checks against either. Detection is unambiguous (presence of `work-queue/items/` next to the queue file, or a header marker in the index).
+- [ ] `--fix` works in both layouts.
+- [ ] New `--migrate-to-split WORK_QUEUE.md` subcommand performs the one-way migration, writing per-item files and rewriting the queue as the index. The reverse migration is out of scope.
+- [ ] Tests cover: parsing each layout, --fix on each layout, the migration round-trip preserves item content.
+- [ ] `references/queue-format.md` Known Limits section updated to describe both layouts and when to migrate.
+
+**Notes**
+**Local checks before asking**
+- `work-queue/scripts/validate_queue.py` parsing (`parse_items`, `iter_unfenced`) — currently single-file only.
+- `work-queue/references/queue-format.md` Known Limits and Scaling Path section (added in WQ-022) — sketches the hybrid layout.
+- Existing fixtures under `work-queue/examples/` will need a split-layout counterpart.
+
+Large effort: new parsing path, new subcommand, fixtures, docs. Selected via Y/N round on 2026-05-26; flagged as premature for current scale but user wants it in the queue regardless. Defer drain until current single-file usage actually feels constrained.
+
+### WQ-048 First-class item dependencies that drain respects
+
+- **Type**: feature
+- **Priority**: P2
+- **Created**: 2026-05-26
+- **Area**: validator
+
+**Problem / Want**
+Items can depend on other items today only via free-text `Blocked on:` markers, which the validator checks for resolution (WQ-006) but the drain selector does not use. A `Depends on` field that drain treats as a scheduling constraint prevents the agent from picking an item whose prerequisites are not Done.
+
+**Acceptance**
+- [ ] New `- **Depends on**: WQ-002, WQ-005` field, recognized by `extract_fields`. Multiple comma-separated IDs allowed.
+- [ ] Validator errors when a `Depends on` ID does not exist in the queue (same shape as the existing WQ-006 check for `Blocked on`).
+- [ ] Validator warns when a Ready item depends on an item that is itself not Done (Ready, In progress, Blocked, Inbox, Needs refinement).
+- [ ] Drain selector logic in SKILL.md and `references/drain.md` is updated: when picking the next Ready item, skip any whose deps are not all Done; if every Ready item is blocked by an unmet dep, report the dep chain and stop.
+- [ ] Tests cover: valid deps, unknown-id error, unmet-dep warning, and drain-selection skip (the last via a small in-memory selector test, not a real drain).
+
+**Notes**
+**Local checks before asking**
+- `work-queue/scripts/validate_queue.py` `extract_fields`, `validate_blocked_references` (WQ-006), `validate_ready_order` for the selector logic.
+- `work-queue/references/queue-format.md` Item Template — needs the new optional field.
+- `work-queue/references/drain.md` "Start Conditions" — selector rule lives here.
+
+Selected via Y/N round on 2026-05-26; flagged as low value at current scale (the existing priority + creation-date sort handled 38 of 39 items correctly) but user wants it in the queue regardless. Useful when items have more interdependence.
 
 ## Needs refinement
 
