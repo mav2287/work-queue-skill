@@ -484,6 +484,217 @@ _None._
             # File must not have been modified
             self.assertEqual(path.read_text(encoding="utf-8"), text)
 
+    def test_split_layout_detected_and_parses(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            index_path = tmp_path / "WORK_QUEUE.md"
+            items_dir = tmp_path / "items"
+            items_dir.mkdir()
+            (items_dir / "WQ-001.md").write_text(
+                """---
+id: WQ-001
+type: bug
+priority: P1
+created: 2026-05-23
+area: tests
+deps: []
+---
+
+### WQ-001 Fix sample bug
+
+**Problem / Want**
+Sample.
+
+**Acceptance**
+- [ ] Sample.
+
+**Notes**
+Sample.
+""",
+                encoding="utf-8",
+            )
+            index_path.write_text(
+                """# Work Queue
+
+## In progress
+
+_None._
+
+## Blocked
+
+_None._
+
+## Ready
+
+- [ ] [WQ-001 Fix sample bug](items/WQ-001.md) — P1 bug
+
+## Needs refinement
+
+_None._
+
+## Inbox
+
+_None._
+
+## Done
+
+_None._
+
+## Cancelled
+
+_None._
+""",
+                encoding="utf-8",
+            )
+            self.assertEqual(validate_queue.detect_layout(index_path), "split")
+            with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(
+                io.StringIO()
+            ):
+                code = validate_queue.validate(
+                    index_path, allow_done=False, strict_sections=True
+                )
+        self.assertEqual(code, 0)
+
+    def test_split_layout_dangling_link_errors(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            (tmp_path / "items").mkdir()
+            # Touch a sentinel item so detect_layout returns "split"
+            (tmp_path / "items" / "WQ-002.md").write_text(
+                """---
+id: WQ-002
+type: bug
+priority: P1
+created: 2026-05-23
+area: tests
+deps: []
+---
+
+### WQ-002 Real item
+
+**Problem / Want**
+Sample.
+
+**Acceptance**
+- [ ] Sample.
+
+**Notes**
+Sample.
+""",
+                encoding="utf-8",
+            )
+            index_path = tmp_path / "WORK_QUEUE.md"
+            index_path.write_text(
+                """# Work Queue
+
+## In progress
+
+_None._
+
+## Blocked
+
+_None._
+
+## Ready
+
+- [ ] [WQ-001 Missing](items/WQ-001.md) — P1 bug
+- [ ] [WQ-002 Real item](items/WQ-002.md) — P1 bug
+
+## Needs refinement
+
+_None._
+
+## Inbox
+
+_None._
+
+## Done
+
+_None._
+
+## Cancelled
+
+_None._
+""",
+                encoding="utf-8",
+            )
+            stderr = io.StringIO()
+            with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(
+                stderr
+            ):
+                code = validate_queue.validate(
+                    index_path, allow_done=False, strict_sections=True
+                )
+        self.assertEqual(code, 1)
+        self.assertIn("missing file WQ-001.md", stderr.getvalue())
+
+    def test_fix_sorts_split_layout_index_links(self):
+        body = """# Work Queue
+
+## In progress
+
+_None._
+
+## Blocked
+
+_None._
+
+## Ready
+
+- [ ] [WQ-002 Item B](items/WQ-002.md) — P2 feature
+- [ ] [WQ-001 Item A](items/WQ-001.md) — P1 bug
+
+## Needs refinement
+
+_None._
+
+## Inbox
+
+_None._
+
+## Done
+
+_None._
+
+## Cancelled
+
+_None._
+"""
+        fixed = validate_queue.fix_queue(body)
+        ready = fixed[fixed.index("## Ready"):fixed.index("## Needs refinement")]
+        self.assertLess(ready.index("WQ-001"), ready.index("WQ-002"))
+
+    def test_migrate_to_split_round_trips_item_content(self):
+        single = queue_with_ready(item("WQ-001") + "\n" + item("WQ-002", "P2"))
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            path = tmp_path / "WORK_QUEUE.md"
+            path.write_text(single, encoding="utf-8")
+            written, errors = validate_queue.migrate_to_split(path)
+            self.assertEqual(errors, [])
+            self.assertEqual(written, 2)
+            self.assertEqual(validate_queue.detect_layout(path), "split")
+            self.assertTrue((tmp_path / "items" / "WQ-001.md").exists())
+            self.assertTrue((tmp_path / "items" / "WQ-002.md").exists())
+            with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(
+                io.StringIO()
+            ):
+                code = validate_queue.validate(
+                    path, allow_done=False, strict_sections=True
+                )
+        self.assertEqual(code, 0)
+
+    def test_migrate_refuses_to_overwrite_existing_items_dir(self):
+        single = queue_with_ready(item("WQ-001"))
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            path = tmp_path / "WORK_QUEUE.md"
+            path.write_text(single, encoding="utf-8")
+            (tmp_path / "items").mkdir()
+            written, errors = validate_queue.migrate_to_split(path)
+        self.assertEqual(written, 0)
+        self.assertTrue(any("refusing to overwrite" in e for e in errors))
+
     def test_fix_is_idempotent(self):
         text = queue_with_ready(item("WQ-001", "P0") + "\n" + item("WQ-002", "P1"))
         once = validate_queue.fix_queue(text)

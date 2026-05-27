@@ -190,6 +190,7 @@ Flags:
 | `--json` | Emit one JSON document on stdout instead of human-readable lines. |
 | `--max-inbox-size N` | Warn when Inbox holds more than `N` items (default 25, 0 disables). |
 | `--max-inbox-age-days D` | Warn when an Inbox item is older than `D` days (default 30, 0 disables). |
+| `--migrate-to-split` | One-way migration from single-file layout to split (index + `items/`) layout. Refuses to overwrite an existing `items/` directory. |
 
 Exit codes:
 

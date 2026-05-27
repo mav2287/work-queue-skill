@@ -131,39 +131,82 @@ paths it modified directly and notes "no commit" in place of the SHA.
 
 Field and acceptance bullets may be indented, but the item heading must be a normal Markdown heading (`### WQ-001 ...`) outside of a fenced code block.
 
-## Known Limits and Scaling Path
+## Layouts: single-file and split
 
-The v1 schema is a single Markdown file per queue. That is intentional:
-one file diffs cleanly, reviews easily, and stays portable across every
-agent that loads markdown.
+Queues come in two shapes. The validator detects which is in use; you
+do not pick a layout, the file structure picks it.
 
-The single-file design becomes uncomfortable past roughly **50 active
-items** (Ready + In progress + Blocked + Needs refinement combined).
-Symptoms are predictable: merge conflicts on every PR, slow scroll,
-duplicate items because nobody can see the existing ones, and a
-section-reordering nightmare on hand edits.
+### Single-file (default)
 
-Current workarounds:
+Every item lives inline inside the queue file under its status
+section. This is the simplest layout and the default the starter
+template produces. Recommended until the file feels unwieldy —
+typically past roughly **50 active items** (Ready + In progress +
+Blocked + Needs refinement combined).
 
-- run `--fix` regularly so the file is always canonically ordered;
-- aggressively retire Done and Cancelled items;
-- split per-area (`frontend/WORK_QUEUE.md`, `backend/WORK_QUEUE.md`)
-  and lint all of them in one CI step with the multi-file invocation.
+### Split (index + per-item files)
 
-Planned future evolution (not in v1):
+The queue file becomes a short index of checkbox links pointing into
+a sibling `items/` directory; each item is one file.
 
-- **index plus per-item files** — `WORK_QUEUE.md` becomes a short
-  `- [ ]` index that links to per-item details under
-  `work-queue/items/WQ-NNN.md`. Each item file carries YAML
-  frontmatter (`id`, `status`, `priority`, `created`, `deps`) and
-  Markdown body. This survives merges (each item is its own file),
-  scales past hundreds of items, and keeps the at-a-glance review
-  experience of the index. It is the pattern Backlog.md and Spec Kit
-  converged on independently.
+Index entry:
 
-The item IDs and body schema in this document are designed to migrate
-to the hybrid layout without rewriting items; only the location and
-container change.
+```markdown
+- [ ] [WQ-001 Some title](items/WQ-001.md) — P1 bug
+```
+
+Per-item file (`items/WQ-001.md`):
+
+```markdown
+---
+type: bug
+priority: P1
+created: 2026-05-26
+area: validator
+id: WQ-001
+deps: []
+---
+
+### WQ-001 Some title
+
+**Problem / Want**
+...
+
+**Acceptance**
+- [ ] ...
+
+**Notes**
+...
+```
+
+In the split layout the status of an item is the section its link
+sits under in the index. The frontmatter holds the fields the validator
+needs without reading the full body, and the body holds the same
+Problem/Acceptance/Notes shape as before.
+
+The split layout survives merges (each item is its own file), scales
+past hundreds of items, and keeps the at-a-glance review experience
+through the index.
+
+### Detection
+
+Detection is unambiguous: the validator looks for a sibling `items/`
+directory next to the queue file containing at least one `WQ-NNN.md`
+file. If present, the queue is split; otherwise single.
+
+### Migration
+
+Run:
+
+```bash
+python3 work-queue/scripts/validate_queue.py --migrate-to-split WORK_QUEUE.md
+```
+
+This reads the single-file queue, writes one file per item under
+`items/`, and rewrites the queue file as the index. The migration
+refuses to overwrite an existing `items/` directory. Reverse
+migration (split → single) is intentionally not supported; revert via
+git.
 
 ## Section Semantics
 

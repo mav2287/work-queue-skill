@@ -12,31 +12,7 @@ Single source of truth for active work the agent can intake, refine, execute, ve
 
 ## In progress
 
-### WQ-047 Hybrid storage: index plus per-item files
-
-- **Type**: feature
-- **Priority**: P2
-- **Created**: 2026-05-26
-- **Area**: validator
-
-**Problem / Want**
-Past ~60-80 active items the single-file design becomes unwieldy (merge conflicts, slow scroll, hard to spot duplicates). The competing pattern — short index file linking to one file per item — survives merges and scales further. The schema is designed to migrate cleanly (WQ-022 documents the path); this item implements it.
-
-**Acceptance**
-- [ ] `WORK_QUEUE.md` may take a "split" shape: an index using `- [ ]` syntax with one entry per item, linking to `work-queue/items/WQ-NNN.md`. Each per-item file carries YAML frontmatter (`id`, `status`, `priority`, `created`, `area`, `deps`) plus the same Markdown body as today.
-- [ ] `validate_queue.py` detects which layout a queue uses and runs the same checks against either. Detection is unambiguous (presence of `work-queue/items/` next to the queue file, or a header marker in the index).
-- [ ] `--fix` works in both layouts.
-- [ ] New `--migrate-to-split WORK_QUEUE.md` subcommand performs the one-way migration, writing per-item files and rewriting the queue as the index. The reverse migration is out of scope.
-- [ ] Tests cover: parsing each layout, --fix on each layout, the migration round-trip preserves item content.
-- [ ] `references/queue-format.md` Known Limits section updated to describe both layouts and when to migrate.
-
-**Notes**
-**Local checks before asking**
-- `work-queue/scripts/validate_queue.py` parsing (`parse_items`, `iter_unfenced`) — currently single-file only.
-- `work-queue/references/queue-format.md` Known Limits and Scaling Path section (added in WQ-022) — sketches the hybrid layout.
-- Existing fixtures under `work-queue/examples/` will need a split-layout counterpart.
-
-Large effort: new parsing path, new subcommand, fixtures, docs. Selected via Y/N round on 2026-05-26; flagged as premature for current scale but user wants it in the queue regardless. Defer drain until current single-file usage actually feels constrained.
+_None._
 
 ## Blocked
 
@@ -78,6 +54,40 @@ _None._
 _None._
 
 ## Done
+
+### WQ-047 Hybrid storage: index plus per-item files
+
+- **Type**: feature
+- **Priority**: P2
+- **Created**: 2026-05-26
+- **Area**: validator
+
+**Problem / Want**
+Past ~60-80 active items the single-file design becomes unwieldy. The split layout (index + per-item files) survives merges and scales further; the schema was designed to migrate cleanly. This item implements it.
+
+**Acceptance**
+- [x] `WORK_QUEUE.md` may take a "split" shape: an index using `- [ ]` syntax with one entry per item, linking to `work-queue/items/WQ-NNN.md`. Each per-item file carries YAML frontmatter (`id`, `status`, `priority`, `created`, `area`, `deps`) plus the same Markdown body as today.
+- [x] `validate_queue.py` detects which layout a queue uses and runs the same checks against either. Detection is unambiguous (presence of `items/` next to the queue file containing at least one `WQ-NNN.md`).
+- [x] `--fix` works in both layouts.
+- [x] New `--migrate-to-split WORK_QUEUE.md` subcommand performs the one-way migration, writing per-item files and rewriting the queue as the index. The reverse migration is out of scope.
+- [x] Tests cover: parsing each layout, --fix on each layout, the migration round-trip preserves item content.
+- [x] `references/queue-format.md` Known Limits section updated to describe both layouts and when to migrate.
+
+**Notes**
+Added `detect_layout`, `parse_split_queue`, `_parse_item_frontmatter`, `migrate_to_split`, plus a `_strip_inline_fields` / `_extract_preamble` pair for the migration. `collect()` now dispatches on layout. `fix_queue` learned a split-layout path: when a Ready section contains link lines, it sorts them by parsed `(priority, id)` using `_split_link_sort_key` rather than the body-block sort it uses for single-file. The frontmatter parser is stdlib-only (a focused regex pair, same approach as `validate_skill.py`) — no PyYAML dependency.
+
+Four new tests: split-layout parse, dangling link error, fix sort on split, migrate round-trip + refuse-overwrite. The validator decision under split: status is the section the link sits under in the index; the frontmatter holds fields the validator needs without reading the full body; the body retains the same `### WQ-NNN` heading and `**Problem / Want**` / `**Acceptance**` / `**Notes**` shape so existing checks work after a small synthetic-prefix shim. References doc rewrites the Known Limits section to describe both layouts, the detection rule, the per-item file schema, and the migration command.
+
+**Verification**
+- `python3 -m unittest discover -s tests`: 47 passed (4 new)
+- `python3 scripts/validate_skill.py work-queue`: passed
+- `python3 work-queue/scripts/validate_queue.py --strict-sections WORK_QUEUE.md`: passed
+- `mypy --strict scripts/validate_skill.py work-queue/scripts/validate_queue.py`: 0 errors
+- `markdownlint-cli2`: 20 files, 0 errors
+- Manual: built a /tmp/split-test fixture, ran `--strict-sections` (caught wrong sort), then `--fix`, then re-validated — passed clean.
+
+**Outcome**
+Changed: `work-queue/scripts/validate_queue.py` (split layout end-to-end), `work-queue/references/queue-format.md` (Layouts section rewrite), `README.md` (new flag), `tests/test_validate_queue.py` (4 new tests). Commit: forthcoming. One-line summary: queues can now live as `WORK_QUEUE.md` + `items/WQ-NNN.md`, and `--migrate-to-split` performs the one-way conversion.
 
 ### WQ-046 Auto-populate Outcome on Done; keep Verification manual
 

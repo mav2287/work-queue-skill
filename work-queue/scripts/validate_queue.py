@@ -48,6 +48,11 @@ FENCE_RE = re.compile(r"^\s*(```|~~~)")
 BOLD_HEADING_RE = re.compile(r"^\*\*([^*]+)\*\*$")
 BLOCKED_MARKER_RE = re.compile(r"^(?:-\s+)?\*\*(Blocked on|Questions)\*\*:?\s*.*$")
 ID_REFERENCE_RE = re.compile(r"\b([A-Z][A-Z0-9]*-\d{3,})\b")
+SPLIT_LINK_RE = re.compile(
+    r"^\s*-\s+\[[\sxX]\]\s+\[([A-Z][A-Z0-9]*-\d{3,})\s+([^\]]+?)\]\(items/[^)]+\)"
+)
+ITEM_FRONTMATTER_RE = re.compile(r"\A---\n(.*?)\n---\n", re.DOTALL)
+FRONTMATTER_FIELD_RE = re.compile(r"^([a-z][a-z0-9_]*)\s*:\s*(.*?)\s*$")
 PLACEHOLDER_RE = re.compile(
     r"<[^>\n]+>|\b(?:tbd|todo|clarify)\b|\bneeds\s+clarification\b",
     re.IGNORECASE,
@@ -81,6 +86,107 @@ def iter_unfenced(lines: list[str]) -> Iterator[str]:
             continue
         if not in_fence:
             yield line
+
+
+def detect_layout(queue_path: Path) -> str:
+    """Return "split" if a sibling ``items/`` directory holds WQ-NNN.md files, else "single"."""
+    items_dir = queue_path.parent / "items"
+    if items_dir.is_dir() and any(items_dir.glob("WQ-*.md")):
+        return "split"
+    return "single"
+
+
+def _parse_item_frontmatter(text: str) -> tuple[dict[str, str], str]:
+    """Strip an item file's YAML frontmatter; return (fields, body)."""
+    match = ITEM_FRONTMATTER_RE.match(text)
+    if not match:
+        return {}, text
+    fields: dict[str, str] = {}
+    for line in match.group(1).splitlines():
+        if not line.strip():
+            continue
+        field_match = FRONTMATTER_FIELD_RE.match(line)
+        if not field_match:
+            continue
+        value = field_match.group(2)
+        if len(value) >= 2 and value[0] in {"'", '"'} and value[0] == value[-1]:
+            value = value[1:-1]
+        fields[field_match.group(1)] = value
+    return fields, text[match.end():]
+
+
+def parse_split_queue(
+    queue_path: Path,
+) -> tuple[list[Item], list[Section], list[str]]:
+    """Parse a split-layout queue. Returns (items, sections, parse_errors)."""
+    text = queue_path.read_text(encoding="utf-8")
+    sections: list[Section] = []
+    parse_errors: list[str] = []
+    section_for_id: dict[str, tuple[str, int]] = {}
+    seen_ids: set[str] = set()
+    current_section = ""
+    in_fence = False
+
+    for index, line in enumerate(text.splitlines(), start=1):
+        if FENCE_RE.match(line):
+            in_fence = not in_fence
+            continue
+        if in_fence:
+            continue
+        section_match = SECTION_RE.match(line)
+        if section_match:
+            current_section = section_match.group(1).strip()
+            sections.append(Section(current_section, index))
+            continue
+        link_match = SPLIT_LINK_RE.match(line)
+        if link_match:
+            item_id = link_match.group(1)
+            if item_id in seen_ids:
+                parse_errors.append(
+                    f"{item_id} line {index}: duplicate index link first seen on line {section_for_id[item_id][1]}"
+                )
+                continue
+            seen_ids.add(item_id)
+            section_for_id[item_id] = (current_section, index)
+
+    items_dir = queue_path.parent / "items"
+    items: list[Item] = []
+    for item_id, (section, link_line) in section_for_id.items():
+        item_path = items_dir / f"{item_id}.md"
+        if not item_path.exists():
+            parse_errors.append(
+                f"{item_id} line {link_line}: index links to missing file {item_path.name}"
+            )
+            continue
+        item_text = item_path.read_text(encoding="utf-8")
+        frontmatter, body = _parse_item_frontmatter(item_text)
+        body_lines = body.splitlines()
+
+        title = ""
+        for body_line in body_lines:
+            title_match = ITEM_RE.match(body_line)
+            if title_match:
+                title = title_match.group(2).strip()
+                break
+
+        synthetic: list[str] = []
+        for key in ("type", "priority", "created", "area"):
+            value = frontmatter.get(key, "")
+            synthetic.append(f"- **{key.capitalize()}**: {value}")
+        synthetic.append("")
+        synthetic.extend(body_lines)
+
+        items.append(
+            Item(
+                id=item_id,
+                title=title,
+                section=section,
+                line=link_line,
+                body=synthetic,
+            )
+        )
+
+    return items, sections, parse_errors
 
 
 def parse_items(text: str) -> tuple[list[Item], list[Section]]:
@@ -443,6 +549,19 @@ def validate_in_progress(
     return ([message], []) if strict else ([], [message])
 
 
+_SPLIT_LINK_TRAIL_RE = re.compile(r"—\s*(P[0-3])\b")
+
+
+def _split_link_sort_key(line: str) -> tuple[int, tuple[str, int]]:
+    match = SPLIT_LINK_RE.match(line)
+    if not match:
+        return 9, ("", 0)
+    item_id = match.group(1)
+    priority_match = _SPLIT_LINK_TRAIL_RE.search(line)
+    priority = priority_match.group(1) if priority_match else ""
+    return PRIORITY_RANK.get(priority, 9), id_sort_value(item_id)
+
+
 def _item_sort_key(item_lines: list[str]) -> tuple[int, date, tuple[str, int]]:
     header_match = ITEM_RE.match(item_lines[0])
     item_id = header_match.group(1) if header_match else "ZZ-999"
@@ -537,18 +656,35 @@ def fix_queue(text: str) -> str:
     fixed_status: list[tuple[str, list[str]]] = []
     for name, body in status_sections:
         if name == "Ready":
-            pre, items = _split_section_body(body)
-            items.sort(key=_item_sort_key)
-            pre = _trim_block(pre)
-            trimmed_items = [_trim_block(it) for it in items]
-            new_body: list[str] = list(pre)
-            if pre and trimmed_items:
-                new_body.append("")
-            for index, it in enumerate(trimmed_items):
-                if index > 0:
+            # Detect split layout by presence of link lines.
+            link_indices = [
+                i for i, line in enumerate(body) if SPLIT_LINK_RE.match(line)
+            ]
+            if link_indices:
+                non_link = [
+                    line for i, line in enumerate(body) if i not in set(link_indices)
+                ]
+                links = [body[i] for i in link_indices]
+                links.sort(key=_split_link_sort_key)
+                pre = _trim_block(non_link)
+                new_body = list(pre)
+                if pre and links:
                     new_body.append("")
-                new_body.extend(it)
-            fixed_status.append((name, new_body))
+                new_body.extend(links)
+                fixed_status.append((name, new_body))
+            else:
+                pre, items = _split_section_body(body)
+                items.sort(key=_item_sort_key)
+                pre = _trim_block(pre)
+                trimmed_items = [_trim_block(it) for it in items]
+                new_body = list(pre)
+                if pre and trimmed_items:
+                    new_body.append("")
+                for index, it in enumerate(trimmed_items):
+                    if index > 0:
+                        new_body.append("")
+                    new_body.extend(it)
+                fixed_status.append((name, new_body))
         else:
             fixed_status.append((name, _trim_block(body)))
 
@@ -612,10 +748,15 @@ def collect(
 ) -> tuple[list[str], list[str], int]:
     if strict:
         strict_sections = True
-    text = path.read_text(encoding="utf-8")
-    items, sections = parse_items(text)
+    layout = detect_layout(path)
     warnings: list[str] = []
     errors: list[str] = []
+    if layout == "split":
+        items, sections, split_errors = parse_split_queue(path)
+        errors.extend(split_errors)
+    else:
+        text = path.read_text(encoding="utf-8")
+        items, sections = parse_items(text)
     section_errors, section_warnings = validate_sections(sections, strict_sections)
     errors.extend(section_errors)
     warnings.extend(section_warnings)
@@ -658,6 +799,119 @@ def collect(
         warnings.append("no queue items found")
 
     return errors, warnings, len(items)
+
+
+def migrate_to_split(queue_path: Path) -> tuple[int, list[str]]:
+    """One-way migrate a single-file queue to the split (index + items/) layout.
+
+    Returns (items_written, errors). Writes per-item files under
+    ``items/`` next to the queue file, then rewrites the queue file as
+    an index of checkbox links. Refuses to overwrite an existing
+    items/ directory.
+    """
+    errors: list[str] = []
+    if detect_layout(queue_path) == "split":
+        return 0, [f"{queue_path}: already in split layout; nothing to do"]
+
+    text = queue_path.read_text(encoding="utf-8")
+    items, sections = parse_items(text)
+
+    items_dir = queue_path.parent / "items"
+    if items_dir.exists():
+        return 0, [
+            f"{items_dir}: directory already exists; refusing to overwrite. Move or remove it first."
+        ]
+
+    items_dir.mkdir(parents=True)
+    written = 0
+    for item in items:
+        if item.section not in VALID_SECTIONS:
+            continue
+        fields = extract_fields(item)
+        # Strip the inline field block from the body so it lives only in frontmatter.
+        stripped_body = _strip_inline_fields(item.body)
+        # Reconstruct the item file: frontmatter + heading + body.
+        frontmatter_lines = ["---"]
+        for key in ("type", "priority", "created", "area"):
+            frontmatter_lines.append(f"{key}: {fields.get(key.capitalize(), '')}")
+        frontmatter_lines.append(f"id: {item.id}")
+        frontmatter_lines.append("deps: []")
+        frontmatter_lines.append("---")
+        frontmatter_lines.append("")
+        frontmatter_lines.append(f"### {item.id} {item.title}")
+        frontmatter_lines.append("")
+        frontmatter_lines.extend(stripped_body)
+        contents = "\n".join(frontmatter_lines).rstrip() + "\n"
+        (items_dir / f"{item.id}.md").write_text(contents, encoding="utf-8")
+        written += 1
+
+    # Build the index. Preserve any preamble before the first section.
+    preamble = _extract_preamble(text)
+    out_lines: list[str] = preamble[:]
+    if preamble:
+        out_lines.append("")
+    items_by_section: dict[str, list[Item]] = {name: [] for name in VALID_SECTIONS}
+    for item in items:
+        if item.section in items_by_section:
+            items_by_section[item.section].append(item)
+    for section_name in VALID_SECTIONS:
+        if out_lines:
+            out_lines.append("")
+        out_lines.append(f"## {section_name}")
+        out_lines.append("")
+        section_items = items_by_section[section_name]
+        if not section_items:
+            out_lines.append("_None._")
+            continue
+        if section_name == "Ready":
+            section_items = sorted(section_items, key=lambda i: _item_sort_key([f"### {i.id} {i.title}"] + i.body))
+        for item in section_items:
+            fields = extract_fields(item)
+            tag = f"P{fields.get('Priority', '')[1:]} {fields.get('Type', '')}".strip()
+            out_lines.append(
+                f"- [ ] [{item.id} {item.title}](items/{item.id}.md) — {tag}"
+            )
+
+    queue_path.write_text("\n".join(out_lines) + "\n", encoding="utf-8")
+    return written, errors
+
+
+def _strip_inline_fields(body: list[str]) -> list[str]:
+    """Drop the `- **Type**: ...` field block (and the blank line that follows) from a body."""
+    output: list[str] = []
+    skipping = True
+    for line in body:
+        if skipping and FIELD_RE.match(line):
+            continue
+        if skipping and line.strip() == "":
+            # Stop skipping after the first blank that follows the field block.
+            if output:
+                output.append(line)
+            skipping = False
+            continue
+        skipping = False
+        output.append(line)
+    # Trim leading blanks
+    while output and output[0].strip() == "":
+        output.pop(0)
+    return output
+
+
+def _extract_preamble(text: str) -> list[str]:
+    """Lines before the first ## section, trailing blanks stripped."""
+    out: list[str] = []
+    in_fence = False
+    for line in text.splitlines():
+        if FENCE_RE.match(line):
+            in_fence = not in_fence
+            out.append(line)
+            continue
+        if not in_fence and SECTION_RE.match(line):
+            break
+        out.append(line)
+    while out and out[-1].strip() == "":
+        out.pop()
+    return out
 
 
 def validate(
@@ -758,11 +1012,32 @@ def main() -> int:
         help=f"Warn when an Inbox item is older than N days (default {DEFAULT_MAX_INBOX_AGE_DAYS}, 0 disables).",
     )
     parser.add_argument(
+        "--migrate-to-split",
+        action="store_true",
+        help="One-way migration from single-file layout to split (index + items/) layout. Refuses to overwrite an existing items/ directory.",
+    )
+    parser.add_argument(
         "--check",
         action="store_true",
         help="With --fix, exit non-zero if the file would change instead of writing.",
     )
     args = parser.parse_args()
+
+    if args.migrate_to_split:
+        worst = 0
+        for queue_file in args.queue_files:
+            if not queue_file.exists():
+                print(f"ERROR: file not found: {queue_file}", file=sys.stderr)
+                worst = max(worst, 2)
+                continue
+            written, errors = migrate_to_split(queue_file)
+            for message in errors:
+                print(f"ERROR: {message}", file=sys.stderr)
+            if errors:
+                worst = max(worst, 1)
+                continue
+            print(f"{queue_file}: migrated {written} item(s) to split layout")
+        return worst
 
     if args.fix:
         worst = 0
