@@ -4,6 +4,29 @@ All notable changes to this skill are documented here. The format
 follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 this project adheres to [Semantic Versioning](https://semver.org).
 
+## [1.1.1] — 2026-05-27
+
+### Added
+
+- Six slash-command entry points, one per operating mode in the
+  skill. After installing or updating the plugin, the following
+  commands are available:
+  - `/work-queue:intake` — capture raw work items into the queue
+  - `/work-queue:expand` — decompose a PRD or issue body into many items
+  - `/work-queue:refine` — raise Needs refinement or Inbox items to the Ready bar
+  - `/work-queue:drain` — continuously execute Ready items until the queue is empty or blocked
+  - `/work-queue:audit` — read-only validation of structure, readiness, and Done hygiene
+  - `/work-queue:retire` — delete Done and Cancelled items after a durable record exists
+- Each command accepts user-supplied arguments where it makes sense
+  (item id for `refine`, source document for `expand`, item limit
+  for `drain`, queue path for `audit`, `--yes` for `retire`).
+
+### Changed
+
+- README continues to point at `$work-queue` mention and automatic
+  selection as the primary invocation paths; the new slash commands
+  are a third option that surfaces in `/help` after install.
+
 ## [1.1.0] — 2026-05-27
 
 ### Added
@@ -169,5 +192,6 @@ codes) as stable from this tag onward.
   validator, the queue validator, and the regression suite.
 - MIT license.
 
+[1.1.1]: https://github.com/mav2287/work-queue-skill/releases/tag/v1.1.1
 [1.1.0]: https://github.com/mav2287/work-queue-skill/releases/tag/v1.1.0
 [1.0.0]: https://github.com/mav2287/work-queue-skill/releases/tag/v1.0.0

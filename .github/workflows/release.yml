@@ -66,7 +66,7 @@ jobs:
           # Plugin zip: full plugin root (manifests + skill subdir).
           # Installable via `claude --plugin-dir <zip>` or unzipped into
           # ~/.claude/plugins/cache/ when fetched by the marketplace.
-          zip -r "$plugin_zip" .claude-plugin work-queue -x '*.DS_Store'
+          zip -r "$plugin_zip" .claude-plugin work-queue commands -x '*.DS_Store'
           # Skill zip: legacy bare-skill bundle, for users who rsync into
           # ~/.claude/skills/work-queue/ directly.
           (cd work-queue && zip -r "../$skill_zip" . -x '*.DS_Store')
