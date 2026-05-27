@@ -55,11 +55,9 @@ process for each, and the maintenance cost.
 - **Cost**: low, one-time.
 - **Decision**: **in scope.**
 
-## Follow-up items filed
+## Status
 
-- `WQ-040 Submit to awesome-claude-code` (Ready)
-- `WQ-041 Submit to mcpmarket.com and agensi.io` (Ready)
-- `WQ-042 Set GitHub topics, description, and social preview` (Ready)
-
-The two deferred channels do not yet have follow-up items; revisit when
-a submission flow is published.
+This document is analysis only. No submissions have been filed and no
+follow-up queue items have been created. Whether and when to submit to
+any channel is the owner's call; this doc exists so the analysis does
+not need to be repeated.

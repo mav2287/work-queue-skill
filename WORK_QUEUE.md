@@ -20,72 +20,7 @@ _None._
 
 ## Ready
 
-### WQ-040 Submit to awesome-claude-code
-
-- **Type**: chore
-- **Priority**: P3
-- **Created**: 2026-05-26
-- **Area**: release
-
-**Problem / Want**
-The skill is unlisted on community curated lists. Filed as a follow-up from WQ-033.
-
-**Acceptance**
-- [ ] Open a PR against `rohitg00/awesome-claude-code-toolkit` (or current successor) adding this repo URL and a one-line description to the relevant section.
-- [ ] Link the resulting PR back in this item before closing.
-
-**Notes**
-See `docs/distribution.md` for the rationale.
-
-### WQ-041 Submit to mcpmarket.com and agensi.io
-
-- **Type**: chore
-- **Priority**: P3
-- **Created**: 2026-05-26
-- **Area**: release
-
-**Problem / Want**
-Catalog listings are the broadest discoverability channel; filed as a follow-up from WQ-033.
-
-**Acceptance**
-- [ ] Submit the skill to `mcpmarket.com` via its web form, linking to the v0.1.0 release zip.
-- [ ] Submit the skill to `agensi.io` (the `skills.sh` catalog) via its web form.
-- [ ] Record both listing URLs in `docs/distribution.md`.
-
-**Notes**
-The release CI (WQ-027) produces a versioned zip per tag that the catalogs can link to directly.
-
-### WQ-042 Set GitHub repo topics, description, and social preview
-
-- **Type**: chore
-- **Priority**: P3
-- **Created**: 2026-05-26
-- **Area**: release
-
-**Problem / Want**
-Organic GitHub discovery is free signal; filed as a follow-up from WQ-033.
-
-**Acceptance**
-- [ ] Add topics: `claude-code`, `codex`, `agent-skill`, `markdown-task-queue` (plus any obvious adjacent topics).
-- [ ] Set a one-line repo description matching the README opener.
-- [ ] Upload a social-preview image (1280x640) under repo Settings → Social preview.
-
-**Notes**
-These are GitHub repo Settings actions, not code changes.
-
-- **Type**: chore
-- **Priority**: P3
-- **Created**: 2026-05-26
-- **Area**: packaging
-
-**Problem / Want**
-LICENSE year and holder were not audited. A wrong year is harmless; an unverified copyright line is a small papercut.
-
-**Acceptance**
-- [ ] LICENSE shows the correct year (2026 today) and the intended holder name.
-
-**Notes**
-File: `LICENSE`.
+_None._
 
 ## Needs refinement
 
