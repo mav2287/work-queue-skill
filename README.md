@@ -130,7 +130,7 @@ missing) means the agent has discovered the skill.
 ## Invoking the Skill
 
 After installation the skill is auto-discovered by the agent from its
-`SKILL.md` frontmatter. Three ways to invoke it:
+`SKILL.md` frontmatter. Four ways to invoke it:
 
 - **Mention prefix** — `use $work-queue to triage the inbox`. Works
   regardless of install method.
@@ -138,6 +138,8 @@ After installation the skill is auto-discovered by the agent from its
   a request matches the description in `SKILL.md`.
 - **Namespaced slash command** (plugin install only) —
   `/work-queue:work-queue` selects the plugin's skill explicitly.
+- **Per-mode slash commands** (plugin install only) — six namespaced
+  shortcuts, one per operating mode. See the next section.
 
 A first-run prompt that exercises the skill end-to-end:
 
@@ -145,6 +147,25 @@ A first-run prompt that exercises the skill end-to-end:
 Use $work-queue to read WORK_QUEUE.md, validate it, and start draining
 Ready items until the queue is empty or blocked.
 ```
+
+### Per-mode slash commands (plugin install)
+
+The plugin ships one command per documented operating mode. Each
+accepts arguments where it makes sense.
+
+| Command | What it does | Arguments |
+|---|---|---|
+| `/work-queue:intake` | Capture raw work items into the queue without starting implementation. | Optional inline items. With no args, asks the user. |
+| `/work-queue:expand` | Decompose a PRD, design doc, or long issue body into many Ready items in one pass. | The source document as the argument. |
+| `/work-queue:refine` | Raise Needs refinement / Inbox items to the Ready bar. | Optional item id (e.g. `WQ-007`); omit to refine the whole queue. |
+| `/work-queue:drain` | Continuously execute Ready items until the queue is empty, blocked, or a limit is reached. | Optional integer item-count limit. |
+| `/work-queue:audit` | Read-only validation of structure, readiness, dependency resolution, Done hygiene. Never modifies the file. | Optional queue path; defaults to `WORK_QUEUE.md`. |
+| `/work-queue:retire` | Delete Done and Cancelled items whose `**Outcome**` names a durable record. Confirms before deleting. | Pass `--yes` to skip the confirmation prompt. |
+
+These commands are not available with the bare-skill install — they
+ship in the plugin's `commands/` directory. Bare-skill users can
+trigger the same behavior via the `$work-queue` mention prefix and
+naming the mode in plain language (`$work-queue, intake the following…`).
 
 The skill itself is the `work-queue/` directory. The root of this
 repository is packaging, CI, and documentation for publishing.
