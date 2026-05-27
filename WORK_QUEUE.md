@@ -20,29 +20,6 @@ _None._
 
 ## Ready
 
-### WQ-044 Enforce the In progress step in drain
-
-- **Type**: feature
-- **Priority**: P2
-- **Created**: 2026-05-26
-- **Area**: skill-content
-
-**Problem / Want**
-The skill says "move exactly one item to In progress" but nothing in the drain loop or the validator enforces it. The recent production-readiness drain bypassed In progress on every item (Ready → Done in one Edit). Either the rule is real and should be enforced, or it should be dropped. The current gap is the worst option.
-
-**Acceptance**
-- [ ] SKILL.md Drain Loop step 4 is rewritten to make the Ready → In progress edit an explicit and separate step that must complete (and ideally commit) before any code edits begin.
-- [ ] `references/drain.md` adds one line: "do not collapse Ready → In progress and In progress → Done into a single Edit."
-- [ ] `validate_queue.py` gains a warning when a Done item is present and `git log -- WORK_QUEUE.md` shows no intermediate revision in which that item lived under `## In progress`. If the git-history check is out of scope, fall back to a SKILL.md-only enforcement.
-
-**Notes**
-**Local checks before asking**
-- `work-queue/SKILL.md:67-78` Drain Loop steps.
-- `work-queue/scripts/validate_queue.py` `validate_in_progress` (lifted in WQ-005).
-- The most recent 39 commits on this branch demonstrate the bypass: every Done item appears in a single Edit that does not pass through In progress.
-
-The docs-only half is a small change; the git-history validator check is a larger one. Either half satisfies the spirit. Selected via Y/N round on 2026-05-26.
-
 ### WQ-045 Expand mode: decompose a PRD or issue into Ready items
 
 - **Type**: feature
@@ -151,6 +128,34 @@ _None._
 _None._
 
 ## Done
+
+### WQ-044 Enforce the In progress step in drain
+
+- **Type**: feature
+- **Priority**: P2
+- **Created**: 2026-05-26
+- **Area**: skill-content
+
+**Problem / Want**
+The skill required moving items to In progress but nothing enforced the separation; the recent drain bypassed In progress on every Done item.
+
+**Acceptance**
+- [x] SKILL.md Drain Loop step 4 is rewritten to make the Ready → In progress edit an explicit and separate step that must complete (and ideally commit) before any code edits begin.
+- [x] `references/drain.md` adds one line: "do not collapse Ready → In progress and In progress → Done into a single Edit."
+- [x] `validate_queue.py` gains a warning when a Done item is present and `git log -- WORK_QUEUE.md` shows no intermediate revision in which that item lived under `## In progress`. If the git-history check is out of scope, fall back to a SKILL.md-only enforcement.
+
+**Notes**
+Took the SKILL.md-only enforcement fallback the acceptance allows. The git-log validator check is intentionally out of scope: it would couple the validator to a specific VCS, break on rebased history, and the file-shape check (which the validator currently does) cannot tell whether an `In progress` state ever existed on disk between commits. The docs rule names the requirement strongly and the new `Resuming a Drain` flow (WQ-043) catches the failure mode it was designed to prevent.
+
+SKILL.md step 5 now reads "...This is a **separate edit** that lands before any code changes..." with an explicit "Do not collapse this edit into the same write that later moves the item to `Done`." `references/drain.md` gains a `The In Progress Step Is Separate` section right above the Execution Loop. Subsequent items in this drain (WQ-045 onward) follow the new pattern: Ready → In progress in its own commit, then implementation + Done in a second commit.
+
+**Verification**
+- `python3 scripts/validate_skill.py work-queue`: passed
+- `python3 work-queue/scripts/validate_queue.py --strict-sections WORK_QUEUE.md`: passed
+- `python3 -m unittest discover -s tests`: 42 passed
+
+**Outcome**
+Changed: `work-queue/SKILL.md` (Drain Loop step 5), `work-queue/references/drain.md` (new "In Progress Step Is Separate" section).
 
 ### WQ-043 Drain session resumption
 

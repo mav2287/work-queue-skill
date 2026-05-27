@@ -72,7 +72,7 @@ When the user asks to run the queue, continue without stopping after each item:
 2. Check current worktree state when the project uses git and preserve unrelated user changes.
 3. **Check `In progress` before selecting.** If `In progress` already holds an item the current session did not put there, stop and ask the user whether to continue that item, re-claim it for this session, or revert it to `Ready` before picking new work. Do not silently take a second item alongside an existing one. See `references/drain.md` "Resuming a Drain" for the full handoff pattern.
 4. Select the next Ready item by priority, then age, unless the user provides another rule.
-5. Move exactly one item to `In progress`.
+5. Move exactly one item to `In progress`. This is a **separate edit** that lands before any code changes — write the queue update on its own so an interrupted session or a concurrent reader can see which item is being worked. Do not collapse this edit into the same write that later moves the item to `Done`.
 6. Implement the smallest complete change that satisfies acceptance.
 7. Run appropriate verification.
 8. Record verification in Notes.

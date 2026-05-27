@@ -15,6 +15,16 @@ Before changing code:
 
 Default selection: highest priority first, then oldest created date, then lowest ID.
 
+## The In Progress Step Is Separate
+
+Do not collapse `Ready` → `In progress` and `In progress` → `Done`
+into a single edit. The `In progress` state must be observable on
+disk at some point between claiming the item and finishing it, so
+that an interrupted session, a concurrent reader, or `git log` can
+identify what was being worked. Edit the queue to move the item to
+`In progress` *before* touching any other files; edit it again later
+to move the item to `Done`.
+
 ## Execution Loop
 
 Repeat:
