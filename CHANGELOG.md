@@ -4,6 +4,17 @@ All notable changes to this skill are documented here. The format
 follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 this project adheres to [Semantic Versioning](https://semver.org).
 
+## [1.1.2] — 2026-05-27
+
+### Changed
+
+- README's Invoking the Skill section now documents the six per-mode
+  slash commands shipped in 1.1.1 with a behavior-plus-arguments
+  table and a note for bare-skill users. The 1.1.1 release artifact
+  bundled the older README that did not describe the new commands;
+  this release ships a zip whose README matches the repo. No code
+  change vs 1.1.1.
+
 ## [1.1.1] — 2026-05-27
 
 ### Added
@@ -192,6 +203,7 @@ codes) as stable from this tag onward.
   validator, the queue validator, and the regression suite.
 - MIT license.
 
+[1.1.2]: https://github.com/mav2287/work-queue-skill/releases/tag/v1.1.2
 [1.1.1]: https://github.com/mav2287/work-queue-skill/releases/tag/v1.1.1
 [1.1.0]: https://github.com/mav2287/work-queue-skill/releases/tag/v1.1.0
 [1.0.0]: https://github.com/mav2287/work-queue-skill/releases/tag/v1.0.0

@@ -1,7 +1,7 @@
 {
   "name": "work-queue",
   "description": "Intake, refine, prioritize, and autonomously drain a Markdown work queue for bugs, fixes, chores, docs, investigations, and feature work. Use when the user wants to capture many work items, turn vague reports into agent-ready tasks, verify codebase facts before asking clarifying questions, pick the next item, run a queue without repeated prompting, move work through Ready/In progress/Blocked/Done, validate queue structure, or clean up completed items.",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "author": {
     "name": "mav2287"
   },
