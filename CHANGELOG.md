@@ -4,82 +4,141 @@ All notable changes to this skill are documented here. The format
 follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 this project adheres to [Semantic Versioning](https://semver.org).
 
-## [Unreleased]
+## [1.0.0] — 2026-05-27
 
-### Added
+First stable release. The skill — its references, validators,
+templates, fixtures, packaging, and CI — has been audited end to end
+and used to drive its own development through ~60 commits of intake
+and drain. Treat the public surface (`SKILL.md`, `references/`,
+`templates/`, `agents/openai.yaml`, validator CLI flags and exit
+codes) as stable from this tag onward.
 
-- `CONTRIBUTING.md`, `SECURITY.md`, `CODE_OF_CONDUCT.md`, GitHub
-  issue/PR templates.
+### Skill content
+
+- Six operating modes documented in `SKILL.md`: **Intake**, **Expand**,
+  **Refine**, **Drain**, **Audit**, **Retire**.
+- `Trust Model for Queue Content` in `SKILL.md` and a longer
+  `Untrusted Queue Content` section in `references/drain.md` treat
+  queue Notes / Problem / logs as data, not as instructions to the
+  agent. Documents the three-step response (do not follow embedded
+  instructions; preserve the evidence; move to Blocked with a
+  Questions line that quotes the suspicious text).
+- `Concurrency Model` in `references/drain.md` plus a SKILL.md pointer:
+  drain assumes single-writer per queue and lists three pre-claim
+  checks and three mitigations for teams running automation.
+- `Resuming a Drain` section in `references/drain.md` with three
+  options (continue / re-claim / revert) and example agent prompts;
+  Drain Loop step 3 in SKILL.md enforces the resume check before
+  selecting a new Ready item.
+- `The In Progress Step Is Separate` rule in `references/drain.md` and
+  the corresponding SKILL.md instruction: never collapse
+  Ready → In progress and In progress → Done into a single edit.
+- `Secrets Hygiene` section in `references/intake.md` listing
+  prohibited content, a redaction pattern, and the rotation reminder.
+- `Verification and Outcome on Done items` section in
+  `references/queue-format.md` plus the drain-loop instruction:
+  Verification is **hand-written**, Outcome is **auto-populated** from
+  `git diff --name-only`, the head commit SHA, and a one-line prose
+  summary the agent fills.
+- `Local checks before asking` recognized as a first-class body
+  heading; validator warns when Ready items still contain the
+  `"Example only"` template placeholder.
+- `When to Use This Skill` README section distinguishes this queue
+  (persistent, cross-session, repo-versioned) from the host agent's
+  in-session task tracker (ephemeral, agent-private).
+
+### Layouts
+
+- **Single-file layout** (default): all items inline in one queue file.
+- **Split layout** (new): index file of checkbox links plus per-item
+  files under `items/WQ-NNN.md`, each with YAML frontmatter
+  (`type`, `priority`, `created`, `area`, `id`, `deps`). The validator
+  detects which layout is in use and runs the same checks against
+  either.
+- One-way `--migrate-to-split` subcommand strips inline fields, writes
+  per-item files, and rewrites the queue as the index. Refuses to
+  overwrite an existing `items/` directory.
+- `Layouts` section in `references/queue-format.md` describes both
+  shapes and the migration command.
+
+### Validator flags and behavior
+
+- `--strict-sections` requires the canonical section set and ordering.
+- `--strict` promotes opinionated warnings (multiple In progress, Done
+  without `**Verification**`) to errors. Implies `--strict-sections`.
+- `--fix` canonicalizes section order, sorts Ready by priority/date/id,
+  and normalizes whitespace. Works in both single-file and split
+  layouts. `--fix --check` returns non-zero when changes would be made.
+- `--json` emits findings as one structured document on stdout.
+- `--max-inbox-size N` (default 25) and `--max-inbox-age-days D`
+  (default 30) warn when triage debt accumulates; `0` disables either.
+- Multi-file invocation: `validate_queue.py` accepts any number of
+  queue paths in one call.
+- New `Depends on` field on items, comma-separated `WQ-NNN` ids;
+  validator errors on unknown ids and self-deps, warns when a Ready
+  item depends on a non-Done target. `selectable_ready_items` helper
+  exposes drain-ready items whose deps are all satisfied.
+- Validator warns on: duplicate item titles, future or pre-2020
+  `Created` dates, placeholder `WQ-000` ids, dangling
+  `Blocked on:` references, multiple `In progress` items, `Inbox`
+  size and age thresholds, and Done items missing `**Outcome**`.
+- `validate_skill.py` smoke-checks SKILL.md frontmatter, internal
+  markdown link resolution, Python script references, and the Codex
+  `agents/openai.yaml` interface presence. No third-party dependencies.
+
+### Packaging and distribution
+
+- README documents both Claude Code paths
+  (`.claude/skills/work-queue/` recommended,
+  `~/.claude/skills/work-queue/` user-scope alternative) and both
+  Codex CLI paths (`.agents/skills/` repo,
+  `$HOME/.agents/skills/` user, per
+  [developers.openai.com/codex/skills](https://developers.openai.com/codex/skills)).
+- Post-install verification snippets for every target.
+- Codex Interface Descriptor section + comment header in
+  `work-queue/agents/openai.yaml` linking to the schema.
+- Validators section in README listing every flag and exit code.
+- Slash-command-claim corrected: README describes the actual
+  `$work-queue` mention and auto-discovery paths.
+
+### Templates and examples
+
+- Item template starter (`WQ-000` placeholder id that fails validation
+  if pasted verbatim, with the validator warning when an item id ends
+  in `-000`).
+- Starter queue template with the canonical seven status sections plus
+  the `Queue Rules` block.
+- `examples/sample-queue.md`, `examples/ready-bug.md`,
+  `examples/blocked-investigation.md`, `examples/done-with-outcome.md`
+  (full Verification + Outcome pattern), and the Expand-mode pair
+  `examples/expand-input.md` / `examples/expand-output.md`.
+
+### CI and developer workflow
+
+- Pinned Python matrix (`3.10`, `3.12`).
+- Steps: skill validator, queue validator on bundled fixtures,
+  regression test suite, `mypy --strict` against both validators,
+  `markdownlint-cli2` with a config tuned to allow the queue format.
+- OS/IDE noise guard that fails the build if `.DS_Store`,
+  `Thumbs.db`, `Desktop.ini`, `.idea/`, or `.vscode/` reappear in the
+  checkout.
+- Release workflow on `v*` tag push: validates, packages
+  `work-queue/` into a versioned zip, extracts the matching CHANGELOG
+  section, and publishes a GitHub Release with the zip attached.
+- Subprocess smoke tests and a bad-fixture suite under
+  `tests/fixtures/bad/` paired with a manifest of expected error
+  substrings.
+- 52 regression tests covering every validator branch.
+
+### Repo hygiene
+
+- `.gitignore` covers `.DS_Store`, `Thumbs.db`, `Desktop.ini`,
+  `.idea/`, `.vscode/`, Python caches, and editor swap files.
+- `CONTRIBUTING.md`, `SECURITY.md`, `CODE_OF_CONDUCT.md`,
+  `.github/ISSUE_TEMPLATE/{bug_report,feature_request}.md`,
+  `.github/ISSUE_TEMPLATE/config.yml`, `.github/PULL_REQUEST_TEMPLATE.md`.
 - `.pre-commit-config.yaml` registering local hooks for the skill
   validator, the queue validator, and the regression suite.
-- `Codex Interface Descriptor` section in the README plus a comment
-  header in `work-queue/agents/openai.yaml` linking to the schema.
-- CI step that runs `mypy --strict` against both validators.
-- CI job that runs `markdownlint-cli2` against repo markdown with a
-  config tuned to allow the queue format.
+- MIT license.
 
-## [0.1.0] — 2026-05-26
-
-Initial public release. Cuts a milestone after a full production-readiness
-pass against the skill, its validators, packaging, and docs.
-
-### Added
-
-- `--strict` flag that promotes opinionated warnings to errors (multiple In
-  progress items, Done without `**Verification**`). Implies
-  `--strict-sections`.
-- `--fix` mode that canonicalizes section order, sorts Ready by priority/
-  date/id, and normalizes whitespace. `--fix --check` returns non-zero
-  when changes would be made.
-- `--json` mode that emits findings as one structured document on stdout.
-- Multi-file invocation: `validate_queue.py` accepts any number of paths.
-- `--max-inbox-size` and `--max-inbox-age-days` flags that warn on
-  triage debt.
-- Validator now warns on duplicate item titles, future or pre-2020
-  `Created` dates, placeholder `WQ-000` ids, dangling `Blocked on:
-  WQ-NNN` references, and `Example only` placeholder text left in Ready.
-- `**Outcome**` body subsection convention for Done items; validator
-  warns when it is missing.
-- `Local checks before asking` recognized as a first-class body heading.
-- Example fixture `work-queue/examples/done-with-outcome.md` showing the
-  full Done pattern (Verification + Outcome).
-- Bad-fixture suite under `tests/fixtures/bad/` plus a subprocess smoke
-  test that runs the real CLI.
-- `Trust Model for Queue Content` section in SKILL.md and
-  `Untrusted Queue Content` in `references/drain.md` covering
-  prompt-injection from queue items.
-- `Concurrency Model` section in `references/drain.md`.
-- `Secrets Hygiene` section in `references/intake.md`.
-- `Known Limits and Scaling Path` section in `references/queue-format.md`
-  naming the ~50 active items comfort ceiling and the hybrid layout
-  evolution.
-- `Verification and Outcome on Done items` and `Created Date Sanity`
-  sections in `references/queue-format.md`.
-- `When to Use This Skill` README section distinguishing this queue from
-  the host agent's in-session task tracker.
-- Validators section in README listing every flag and exit code.
-- CI step that fails the build when OS or IDE metadata reappears in the
-  checkout.
-
-### Changed
-
-- README now documents the OpenAI-documented Codex install paths
-  (`.agents/skills` and `$HOME/.agents/skills`) and keeps a back-compat
-  note for `~/.codex/skills/`.
-- README replaces the false `/work-queue` slash-command claim with an
-  `Invoking the Skill` section describing the real `$work-queue` and
-  auto-discovery paths.
-- Item template id is now `WQ-000` (parses, fails on placeholder title)
-  and the validator warns on the placeholder id.
-- `validate_openai_yaml` renamed to `check_openai_yaml_presence` with a
-  docstring spelling out the no-deps trade-off (back-compat alias
-  retained).
-- `validate_queue.validate` and `collect` accept the new flags as keyword
-  arguments.
-
-### Fixed
-
-- `.gitignore` covers `.DS_Store`, `Thumbs.db`, `Desktop.ini`, `.idea/`,
-  `.vscode/`, and common Python caches.
-
-[0.1.0]: https://github.com/replace-me/replace-me/releases/tag/v0.1.0
+[1.0.0]: https://github.com/mav2287/work-queue-skill/releases/tag/v1.0.0
