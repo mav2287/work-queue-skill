@@ -74,10 +74,39 @@ subsections:
 
 - `**Verification**` — concise list of commands run and their results
   (passed/failed/skipped). Required by the validator under `--strict`.
+  **Hand-written**: the variability is the value. Do not auto-fill.
 - `**Outcome**` — what shipped: changed file paths, commit SHA or PR
   link, and a one-line summary. The validator warns when it is
   missing on a Done item. This is the durable record that survives
-  retirement.
+  retirement. **Auto-populated** from observable state during drain;
+  see below.
+
+### Auto-populated Outcome shape
+
+The drain agent fills Outcome from data it already has at the moment
+of completion:
+
+- **Changed paths** come from `git diff --name-only` between the
+  worktree's state when the item moved to `In progress` and the state
+  when it moves to `Done`. Untracked files added during the item are
+  included.
+- **Commit reference** is the head SHA at completion. If a PR exists,
+  the PR URL is included alongside the SHA.
+- **One-line summary** is the only hand-written piece: a single
+  sentence describing what shipped.
+
+Example:
+
+```markdown
+**Outcome**
+Changed: `apps/web/invoices/list.tsx`, `apps/web/invoices/list.test.tsx`.
+Commit: a1b2c3d. PR: example-org/example-app#1234.
+One-line summary: replaced the unconditional loader with a length-aware
+branch that renders the empty state when the query returns no records.
+```
+
+When the project does not use git, the agent records the affected
+paths it modified directly and notes "no commit" in place of the SHA.
 
 ## Item Template
 

@@ -12,29 +12,7 @@ Single source of truth for active work the agent can intake, refine, execute, ve
 
 ## In progress
 
-### WQ-046 Auto-populate Outcome on Done; keep Verification manual
-
-- **Type**: feature
-- **Priority**: P2
-- **Created**: 2026-05-26
-- **Area**: skill-content
-
-**Problem / Want**
-The Outcome convention (WQ-020) requires every Done item to list changed file paths plus a commit or PR reference. That data is mechanical: `git diff --name-only` since the item moved to In progress, plus the most recent commit SHA. The agent has it; writing it by hand is pure boilerplate. Verification, by contrast, is the variable part — what was run and what passed — and should remain hand-written.
-
-**Acceptance**
-- [ ] SKILL.md Drain Loop step 7 (or a new step) instructs the agent: when moving an item to Done, populate Outcome with the list of changed paths between the In progress entry and the moment of completion, plus the head commit SHA at completion.
-- [ ] The auto-populated Outcome includes a one-line summary slot the agent fills, so the field is not purely mechanical.
-- [ ] Verification remains explicitly hand-written; the SKILL.md instruction calls this out so the agent does not auto-fill it.
-- [ ] `references/queue-format.md` Outcome section documents the auto-populated shape and shows one example.
-
-**Notes**
-**Local checks before asking**
-- `work-queue/SKILL.md` Drain Loop and Retention sections.
-- `work-queue/references/queue-format.md` "Verification and Outcome on Done items" section (added in WQ-020).
-- `work-queue/templates/item.md` HTML-comment hint (added in WQ-020).
-
-Selected via Y/N round on 2026-05-26 with the explicit split: Outcome auto, Verification manual. Do not implement Verification templating.
+_None._
 
 ## Blocked
 
@@ -102,6 +80,33 @@ _None._
 _None._
 
 ## Done
+
+### WQ-046 Auto-populate Outcome on Done; keep Verification manual
+
+- **Type**: feature
+- **Priority**: P2
+- **Created**: 2026-05-26
+- **Area**: skill-content
+
+**Problem / Want**
+Outcome data is mechanical (changed paths + commit SHA + a one-line prose summary). Writing it by hand on every Done item was pure boilerplate. Verification, by contrast, is variable and should stay manual.
+
+**Acceptance**
+- [x] SKILL.md Drain Loop step 7 (or a new step) instructs the agent: when moving an item to Done, populate Outcome with the list of changed paths between the In progress entry and the moment of completion, plus the head commit SHA at completion.
+- [x] The auto-populated Outcome includes a one-line summary slot the agent fills, so the field is not purely mechanical.
+- [x] Verification remains explicitly hand-written; the SKILL.md instruction calls this out so the agent does not auto-fill it.
+- [x] `references/queue-format.md` Outcome section documents the auto-populated shape and shows one example.
+
+**Notes**
+SKILL.md drain step 8 now explicitly says Verification is hand-written; step 9 instructs the agent to auto-populate Outcome from `git diff --name-only HEAD --`, the head SHA, and a one-line prose summary. The references doc shows the full shape with an example block and covers the no-git fallback.
+
+**Verification**
+- `python3 scripts/validate_skill.py work-queue`: passed
+- `python3 work-queue/scripts/validate_queue.py --strict-sections WORK_QUEUE.md`: passed
+- `python3 -m unittest discover -s tests`: 42 passed
+
+**Outcome**
+Changed: `work-queue/SKILL.md`, `work-queue/references/queue-format.md`. Commit: head at time of completion (forthcoming). One-line summary: drain step now auto-fills Outcome and explicitly leaves Verification manual.
 
 ### WQ-045 Expand mode
 

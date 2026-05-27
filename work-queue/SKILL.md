@@ -76,8 +76,8 @@ When the user asks to run the queue, continue without stopping after each item:
 5. Move exactly one item to `In progress`. This is a **separate edit** that lands before any code changes — write the queue update on its own so an interrupted session or a concurrent reader can see which item is being worked. Do not collapse this edit into the same write that later moves the item to `Done`.
 6. Implement the smallest complete change that satisfies acceptance.
 7. Run appropriate verification.
-8. Record verification in Notes.
-9. Move the item to `Done`, or to `Blocked` with exact missing information.
+8. Record verification in Notes. **Verification is hand-written** — list the commands run and their results, exactly. Do not auto-fill it from observable state; the variability is the point.
+9. Move the item to `Done`, or to `Blocked` with exact missing information. When moving to `Done`, **auto-populate the Outcome subsection** from observable state: list the file paths changed between the In progress claim and now (use `git diff --name-only HEAD --` plus untracked files, scoped to this item's edits), record the current head commit SHA, and write one short prose line describing what shipped. The prose line is the agent's contribution; the file list and SHA are mechanical.
 10. Commit, checkpoint, or otherwise isolate the completed item when the project workflow supports it. Stage only the files this item changed; never overwrite or stage unrelated user changes you noticed in step 2.
 11. Repeat until no Ready items remain, a command/approval/tool is blocked, or the user-specified limit is reached.
 
