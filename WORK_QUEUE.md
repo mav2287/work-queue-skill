@@ -12,14 +12,6 @@ Single source of truth for active work the agent can intake, refine, execute, ve
 
 ## In progress
 
-_None._
-
-## Blocked
-
-_None._
-
-## Ready
-
 ### WQ-045 Expand mode: decompose a PRD or issue into Ready items
 
 - **Type**: feature
@@ -43,6 +35,12 @@ Bulk intake today is manual: every item is written by hand. When a PRD, design d
 - `work-queue/references/queue-format.md` Item Template (the schema Expand must emit).
 
 The most recent drain captured 39 items from a code-review audit by hand; Expand mode would have turned that into one paste. Selected via Y/N round on 2026-05-26 with the caveat that value depends on how often batch intake is needed in real use.
+
+## Blocked
+
+_None._
+
+## Ready
 
 ### WQ-046 Auto-populate Outcome on Done; keep Verification manual
 
